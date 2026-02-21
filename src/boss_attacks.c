@@ -12,6 +12,9 @@
 #include <player.h>
 #include <helper.h>
 
+extern int ScreenWidth;
+extern int ScreenHeight;
+
 //  INTERNAL ATTACK SYSTEM TYPES
 
 typedef void (*AttackStartFunc)(void);
@@ -179,6 +182,9 @@ static void SpinAttack_Draw(void) {
 static float HB1_Interval = 0.4f;
 static int HB1_Max = 10;
 
+Vector2 Left = {100, ScreenHeight / 2};
+Vector2 Right = {ScreenWidth - 100, ScreenHeight / 2};
+
 static void HorizontalBeams1_Start() {
     Timer = 0.0f;
     ShotsFired = 0;
@@ -203,4 +209,8 @@ static void HorizontalBeams1_Update(float dt) {
         CurrentAttackIndex = -1;
         EndBossAttack();   // tells boss to return to idle
     }
+}
+
+static void HorizontalBeams1_Draw() {
+    
 }
