@@ -193,7 +193,7 @@ static void HorizontalBeams1_Update(float dt) {
         SpawnBeam(GetPlayerPosition(), GetRandomValue(-10, 10), true);
         Timer = HB1_Interval;
         
-        ShotsFired++;
+        //ShotsFired++;
     }
     
     if (ShotsFired >= HB1_Max) {
