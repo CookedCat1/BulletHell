@@ -1,3 +1,3 @@
 git add .
-git commit -m "Auto Save"
-git push
+git commit -m "Test Commit"
+git push origin main
