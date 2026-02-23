@@ -111,6 +111,9 @@ int main(void) {
         
         for (int i = 0; i < MAX_BEAMS; i++) DrawBeam(&BossBeams[i]);
         
+        //boss
+        DrawBoss();
+        
         //player
         DrawPlayer();
         
@@ -119,8 +122,8 @@ int main(void) {
         DrawFPS(930, 10);
         DrawDebug();
         
-        //boss
-        DrawBoss();
+        //boss health bar
+        DrawBossHpBar();
         
         //lives
         DrawText(TextFormat("Lives: %d", GetPlayerLives()), 15, ScreenHeight - 40, 25, WHITE);

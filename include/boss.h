@@ -20,6 +20,7 @@ void InitBoss(void);
 void UpdateBoss(float dt);
 void UpdateBossAttack(float dt);
 void DrawBoss(void);
+void DrawBossHpBar(void);
 
 void EndBossAttack(void);
 

@@ -71,7 +71,9 @@ void DrawBoss() {
     DrawCurrentAttack();
     
     DrawCircleV(BossPos, BossRadius, RED);
-    
+};
+
+void DrawBossHpBar(void) {
     //hp bar
     Rectangle BossBarOutline = {ScreenWidth / 2 - ScreenWidth / 5, 5 + 30, ScreenWidth / 2.5, 25};
     DrawRectangleRec(BossBarOutline, DARKGRAY);
@@ -88,7 +90,7 @@ void DrawBoss() {
     };
     
     DrawRectangleRec(BossHpFill, MAROON);
-};
+}
 
 void DamageBoss(float amount) {
     BossHp = MinFloat(BossHp - amount, 0.0f);

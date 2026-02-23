@@ -48,8 +48,8 @@ static void HorizontalBeams1_Update(float dt);
 
 static BossAttackEntry AttackTable[] = {
     //{ CrossAttack_Start, CrossAttack_Update, NULL },
-    //{SpinAttack_Start, SpinAttack_Update, SpinAttack_Draw},
-    {HorizontalBeams1_Start, HorizontalBeams1_Update, NULL},
+    {SpinAttack_Start, SpinAttack_Update, SpinAttack_Draw},
+    //{HorizontalBeams1_Start, HorizontalBeams1_Update, NULL},
 };
 
 static const int AttackCount = sizeof(AttackTable) / sizeof(BossAttackEntry);
@@ -175,6 +175,18 @@ static void SpinAttack_Update(float dt) {
 
 static void SpinAttack_Draw(void) {
     DrawCircleV(Center, DeadZoneRadius, Fade(RED, 0.5f));
+    
+    float thickness = 4.0f;
+
+    DrawRing(
+        Center,
+        DeadZoneRadius - thickness,
+        DeadZoneRadius,
+        0,
+        360,
+        64,
+        RED
+    );
 }
 
 // Horizontal beam attack 1
