@@ -3,134 +3,145 @@
 #include <math.h>
 #include "raymath.h"
 #include <stdbool.h>
+#include <raygui.h>
+
+#include <game.h>
+#include <menu.h>
+// #include <settings.h>
 
 #include <config.h>
-#include <beams.h>
-#include <player.h>
-#include <boss.h>
-#include <cooldowns.h>
 #include <helper.h>
 #include <debug.h>
 
-typedef struct {
-    Vector2 Position;
-    Vector2 Velocity;
-    bool Active;
-} Bullet;
-
-typedef struct {
-    Vector2 Pos;
-    float Life;
-} TrailPoint;
-
-#define MaxBullets 512
-#define MaxTrail 12
-
-Bullet Bullets[MaxBullets];
-TrailPoint DashTrail[MaxTrail] = {0};
-Beam BossBeams[MAX_BEAMS] = {0};
-
-//vars
-const int ScreenWidth = SCREEN_WIDTH;
-const int ScreenHeight = SCREEN_HEIGHT;
-
-float ScreenShakeTime = 0.0f;
-float ScreenShakeStrength = 0.0f;
+GameState CurrentGameState = Game_Playing;
 
 bool Paused = false;
 
+
+Vector2 GetVirtualMousePosition() {
+    float screenWidth = GetScreenWidth();
+    float screenHeight = GetScreenHeight();
+
+    float scale = fminf(screenWidth / GAME_WIDTH,
+                        screenHeight / GAME_HEIGHT);
+
+    float destWidth = GAME_WIDTH * scale;
+    float destHeight = GAME_HEIGHT * scale;
+
+    float destX = (screenWidth - destWidth) / 2;
+    float destY = (screenHeight - destHeight) / 2;
+    
+    SetMouseOffset(-destX, -destY);
+    SetMouseScale(1.0f/scale, 1.0f/scale);
+
+    Vector2 mouse = GetMousePosition();
+
+    return mouse;
+}
+
+
 int main(void) {
-    InitWindow(ScreenWidth, ScreenHeight, "Bullet hell");
+    InitWindow(GAME_WIDTH, GAME_HEIGHT, "Bullet hell");
     SetTargetFPS(2400);
     
-    InitPlayer();
-    InitBoss();
+    // Inits
+    InitGame();
     InitDebug();
+    
+    //raygui init
+    GuiLoadStyle("assets/test.rgs");
+    
+    // Rendering Init
+    RenderTexture2D GameTarget = LoadRenderTexture(GAME_WIDTH, GAME_HEIGHT);
+    SetTextureFilter(GameTarget.texture, TEXTURE_FILTER_BILINEAR); 
+    
+    ToggleBorderlessWindowed();
+    //ToggleFullscreen();
+        
+    //SetWindowSize(1820, 200);
    
     while (!WindowShouldClose()) {
         double dt = GetFrameTime();
         
         if (IsKeyPressed(KEY_TAB)) {
-            Paused = !Paused;
+            if (CurrentGameState == Game_Playing) {
+                CurrentGameState = Game_Paused;
+            } else {
+                CurrentGameState = Game_Playing;
+            }
         }
+        
+        if (IsKeyPressed(KEY_P)) Paused = !Paused;
         
         AddDebug(TextFormat("Paused: %d", Paused), Paused? RED : GREEN);
         
-        Vector2 shakeOffset = {0};
-        
-        if (Paused) {
-            
-        } else {
-        
-            if (IsKeyPressed(KEY_B)) {
-                Vector2 TestTHing = {ScreenWidth / 2, ScreenHeight / 2};
+        // updates
+        switch (CurrentGameState) {
+            case Game_Playing:
+                UpdateGame(dt);
                 
-                SpawnBeam(TestTHing, 45, true);
-                SpawnBeam(TestTHing, 135, true);
-                SpawnBeam(TestTHing, 90, false);
-            }
-            
-            // frame updates 
-            UpdatePlayer(dt, GetBossPos(), GetBossRadius());
-            UpdateBoss(dt);
-            UpdateCooldowns(dt);
-            
-            if (CheckBossHit()) {
-                DamageBoss(1.0f);
-            }
-            
-            for (int i = 0; i < MAX_BEAMS; i++) {
-                UpdateBeam(&BossBeams[i], dt);
-            }
-            
-            //screen shake
-            if (CheckPlayerHit()) {
-                ScreenShakeTime = 0.25f;
-                ScreenShakeStrength = 5.0f * (5 - GetPlayerLives());
-            }
-            
-            if (ScreenShakeTime > 0.0f)
-                ScreenShakeTime -= dt;
-
-            if (ScreenShakeTime > 0.0f) {
-                shakeOffset.x = GetRandomValue(-ScreenShakeStrength, ScreenShakeStrength);
-                shakeOffset.y = GetRandomValue(-ScreenShakeStrength, ScreenShakeStrength);
-            }
+                break;
+                
+            case Game_Paused:
+                UpdatePauseMenu(dt, &CurrentGameState);
+                break;
         }
         
+        GetVirtualMousePosition();
+        
+        //game drawing
+        BeginTextureMode(GameTarget);
+            ClearBackground(BLACK);
+                    
+            switch (CurrentGameState) {
+                case Game_Playing:
+                    DrawGame();
+                    break;
+                    
+                case Game_Paused:                
+                    DrawGame();
+                    DrawPauseMenu(&CurrentGameState);
+                    break;
+            }
+            
+            DrawDebug();
+            
+            Vector2 FpsPos = {930, 10};
+            DrawFPS(FpsPos.x, FpsPos.y);
+            DrawText(TextFormat("Screen Resolution: %dx%d", GetScreenWidth(), GetScreenHeight()), 930, 30, 18, GREEN);
+            
+            ClearDebug();
+        EndTextureMode();
+        
+        // game render to scale
         BeginDrawing();
-        ClearBackground(BLACK);
-        
-        // actual screen shake
-        BeginMode2D((Camera2D){
-            .offset = shakeOffset,
-            .target = (Vector2){0,0},
-            .rotation = 0,
-            .zoom = 1
-        });
-        
-        for (int i = 0; i < MAX_BEAMS; i++) DrawBeam(&BossBeams[i]);
-        
-        //boss
-        DrawBoss();
-        
-        //player
-        DrawPlayer();
-        
-        DrawCooldowns();
-        
-        DrawFPS(930, 10);
-        DrawDebug();
-        
-        //boss health bar
-        DrawBossHpBar();
-        
-        //lives
-        DrawText(TextFormat("Lives: %d", GetPlayerLives()), 15, ScreenHeight - 40, 25, WHITE);
-        
-        ClearDebug();
-        EndMode2D();
+            ClearBackground(BLACK);
+
+            float screenWidth = GetScreenWidth();
+            float screenHeight = GetScreenHeight();
+
+            float scale = fminf(screenWidth / GAME_WIDTH,
+                                screenHeight / GAME_HEIGHT);
+
+            float destWidth = GAME_WIDTH * scale;
+            float destHeight = GAME_HEIGHT * scale;
+
+            float destX = (screenWidth - destWidth) / 2;
+            float destY = (screenHeight - destHeight) / 2;
+
+            Rectangle source = {0, 0, GAME_WIDTH, -GAME_HEIGHT};
+            Rectangle dest = {destX, destY, destWidth, destHeight};
+
+            DrawTexturePro(
+                GameTarget.texture,
+                source,
+                dest,
+                (Vector2){0, 0},
+                0.0f,
+                WHITE
+            );
         EndDrawing();
+        
     }
     CloseWindow();
     return 0;

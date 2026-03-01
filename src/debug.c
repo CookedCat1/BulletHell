@@ -15,6 +15,7 @@ typedef struct {
 
 static DebugLine DebugLines[DEBUG_MAX_LINES];
 static int DebugCount = 0;
+static bool ShouldDrawDebug = true;
 
 void InitDebug(void)
 {
@@ -26,8 +27,7 @@ void ClearDebug(void)
     DebugCount = 0;
 }
 
-void AddDebug(const char* text, Color color)
-{
+void AddDebug(const char* text, Color color) {
     if (DebugCount >= DEBUG_MAX_LINES)
         return;
 
@@ -37,8 +37,9 @@ void AddDebug(const char* text, Color color)
     DebugCount++;
 }
 
-void DrawDebug(void)
-{
+void DrawDebug(void) {
+    if (!ShouldDrawDebug) return;
+    
     int ScreenWidth = GetScreenWidth();
     int ScreenHeight = GetScreenHeight();
 
@@ -56,4 +57,8 @@ void DrawDebug(void)
 
         Y -= (DEBUG_FONT_SIZE + DEBUG_LINE_SPACING);
     }
+}
+
+void ToggleDebug() {
+    ShouldDrawDebug = !ShouldDrawDebug;
 }

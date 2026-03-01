@@ -5,6 +5,8 @@
 #include <config.h>
 #include <cooldowns.h>
 #include <debug.h>
+#include <game.h>
+#include <helper.h>
 
 #define MAX_BULLETS 512
 #define MAX_TRAIL 12
@@ -35,6 +37,8 @@ static Vector2 DashVelocity = {0};
 
 static bool RecentlyHitBoss = false;
 
+static Rectangle PlayArea;
+
 typedef struct {
     Vector2 Position;
     Vector2 Velocity;
@@ -49,26 +53,18 @@ typedef struct {
 static Bullet Bullets[MAX_BULLETS];
 static TrailPoint DashTrail[MAX_TRAIL];
 
-extern const int ScreenWidth;
-extern const int ScreenHeight;
-
 CooldownID DashCD;
 CooldownID ShootCD;
 
-static float ClampFloat(float value, float min, float max){
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
-}
-
 // ===== Public API =====
 
-void InitPlayer(void)
-{
+void InitPlayer(void) {
+    PlayArea = GetPlayArea();
+    
     DashCD = AddCooldown("Dash", true);
     ShootCD = AddCooldown("Shoot", true);
 
-    PlayerPos = (Vector2){ ScreenWidth / 2.0f, ScreenHeight / 1.35f };
+    PlayerPos = (Vector2){ PlayArea.x + PLAY_WIDTH / 2.0f, PlayArea.y + PLAY_HEIGHT / 1.35f };
 }
 
 Vector2 GetPlayerMoveDirection(void) {
@@ -116,8 +112,8 @@ void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius)
     Vector2 moveDir = GetPlayerMoveDirection();
     PlayerPos = Vector2Add(PlayerPos, Vector2Scale(moveDir, PlayerSpeed * dt));
 
-    PlayerPos.x = ClampFloat(PlayerPos.x, PlayerRadius, ScreenWidth - PlayerRadius);
-    PlayerPos.y = ClampFloat(PlayerPos.y, PlayerRadius, ScreenHeight - PlayerRadius);
+    PlayerPos.x = ClampFloat(PlayerPos.x, PlayArea.x + PlayerRadius + 2, PlayArea.x + PLAY_WIDTH - PlayerRadius - 2);
+    PlayerPos.y = ClampFloat(PlayerPos.y, PlayArea.y + PlayerRadius + 2, PlayArea.y + PLAY_HEIGHT - PlayerRadius - 2);
 
     // Dash
     if (IsKeyPressed(KEY_SPACE) && !OnCooldown(DashCD)) {

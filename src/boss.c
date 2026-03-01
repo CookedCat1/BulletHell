@@ -1,4 +1,6 @@
 #include <raylib.h>
+
+#include <game.h>
 #include <config.h>
 #include <boss.h>
 #include <helper.h>
@@ -9,19 +11,21 @@ static Vector2 BossPos;
 static const float StartingBossHp = 100.0f;
 static float BossHp;
 static const float BossRadius = 20.0f;
+static const char* BossName = "Boss Name";
 
 static BossState CurrentState;
 static BossAttack CurrentAttack;
 
 static float AttackTimer;
 
-extern const int ScreenWidth;
-extern const int ScreenHeight;
+static Rectangle PlayArea;
 
 extern int AttacksCount;
 
 void InitBoss() {
-    BossPos = (Vector2){ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 8 };
+    PlayArea = GetPlayArea();
+    
+    BossPos = (Vector2){ PLAY_WIDTH / 2 + PlayArea.x, PLAY_HEIGHT / 8 + PlayArea.y};
     BossHp = 100;
     
     CurrentState = BossIdle;
@@ -32,7 +36,7 @@ void InitBoss() {
 
 void UpdateBoss(float dt) {
     AttackTimer -= dt;
-    AttackTimer = MinFloat(AttackTimer, 0.0f);
+    AttackTimer = MaxFloat(AttackTimer, 0.0f);
     
     switch (CurrentState) {
         case BossIdle:
@@ -74,26 +78,43 @@ void DrawBoss() {
 };
 
 void DrawBossHpBar(void) {
-    //hp bar
-    Rectangle BossBarOutline = {ScreenWidth / 2 - ScreenWidth / 5, 5 + 30, ScreenWidth / 2.5, 25};
+    Rectangle playArea = GetPlayArea();
+
+    Rectangle BossBarOutline = {
+        PLAY_WIDTH / 2 - PLAY_WIDTH / 5 + playArea.x,
+        playArea.y - 22,
+        PLAY_WIDTH / 2.5f,
+        25
+    };
+
     DrawRectangleRec(BossBarOutline, DARKGRAY);
     DrawRectangleLinesEx(BossBarOutline, 3.0f, WHITE);
-    
+
     float hpRatio = (float)BossHp / StartingBossHp;
     hpRatio = ClampFloat(hpRatio, 0.0f, 1.0f);
-    
+
     Rectangle BossHpFill = {
         BossBarOutline.x + 3,
         BossBarOutline.y + 3,
         (BossBarOutline.width - 6) * hpRatio,
         BossBarOutline.height - 6
     };
-    
+
     DrawRectangleRec(BossHpFill, MAROON);
+
+    //boss name
+    int fontSize = 20;
+
+    int textWidth = MeasureText(BossName, fontSize);
+
+    float textX = BossBarOutline.x + (BossBarOutline.width - textWidth) / 2.0f;
+    float textY = BossBarOutline.y - fontSize - 4;
+
+    DrawText(BossName, textX, textY, fontSize, WHITE);
 }
 
 void DamageBoss(float amount) {
-    BossHp = MinFloat(BossHp - amount, 0.0f);
+    BossHp = MaxFloat(BossHp - amount, 0.0f);
 };
 
 Vector2 GetBossPos() {

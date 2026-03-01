@@ -1,16 +1,13 @@
-#include "beams.h"
-#include "player.h"
 #include <math.h>
 #include <raymath.h>
+#include <reasings.h>
 
 #include <config.h>
 #include <player.h>
+#include <beams.h>
+#include <helper.h>
 
-typedef struct {
-    float Warning;
-    float Fire;
-    float Fade;
-} BeamProfile;
+#include <debug.h>
 
 static BeamProfile FastProfile = {0.35f, 0.15f, 0.2f};
 static BeamProfile DefaultProfile = {0.75f, 0.3f, 0.5f};
@@ -34,8 +31,12 @@ void StartBeam(Beam* beam, Vector2 origin, float rotation, bool follow) {
     beam->Width = 40;
     beam->Length = 2300.0f;
     
+    beam->Profile = CurrentProfile;
     beam->Timer = ShowWarning? CurrentProfile.Warning : CurrentProfile.Fire; // warning duration
     beam->Alpha = 1.0f;
+    
+    beam->FxDuration = 0.225f;
+    beam->FxTimer = 0.0f;
     
     beam->CheckedHit = false;
 }
@@ -51,21 +52,23 @@ void UpdateBeam(Beam* beam, float dt) {
         case BeamWarning:
             if (beam->Timer <= 0.0f) {
                 beam->State = BeamFiring;
-                beam->Timer = CurrentProfile.Fire;
+                beam->Timer = beam->Profile.Fire;
             }
             
-            if (beam->Timer >= CurrentProfile.Fire && beam->Following) {
+            if (beam->Timer >= beam->Profile.Fire && beam->Following) {
                 beam->Position = PlayerPos;
-            } else if (beam->Timer < CurrentProfile.Fire && beam->Following) {
+            } else if (beam->Timer < beam->Profile.Fire && beam->Following) {
                 beam->Following = false;
             } 
             
             break;
 
         case BeamFiring:
+            beam->FxTimer = MinFloat(beam->FxTimer + dt, beam->FxDuration);
+        
             if (beam->Timer <= 0.0f) {
                 beam->State = BeamFading;
-                beam->Timer = CurrentProfile.Fade;
+                beam->Timer = beam->Profile.Fade;
             }
             
             if (!beam->CheckedHit) {
@@ -88,9 +91,12 @@ void UpdateBeam(Beam* beam, float dt) {
             break;
 
         case BeamFading:
-            beam->Alpha = beam->Timer / CurrentProfile.Fade;
+            beam->FxTimer = MinFloat(beam->FxTimer + dt, beam->FxDuration);
+        
+            beam->Alpha = beam->Timer / beam->Profile.Fade;
             if (beam->Timer <= 0.0f) {
                 beam->State = BeamInactive;
+                beam->FxTimer = 0.0f;
             }
             break;
 
@@ -127,12 +133,11 @@ void DrawBeam(Beam* beam) {
     };
     
     if (beam->State == BeamFiring) {
-        float MaxFxScale = 2.25f;
+        float MaxFxScale = 2.65f;
         
-        float FireProgress = 1.0f - (beam->Timer / 0.3f);
-        float Curved = 1.0f - powf(1.0f - FireProgress, 3.0f);
-        float FxScale = 1.0f + Curved * (MaxFxScale - 1.0f);
-
+        float FxScale = EaseCubicOut(beam->FxTimer, 1.0f, MaxFxScale - 1.0f, beam->FxDuration);
+        AddDebug(TextFormat("Current scale %.2f", FxScale), WHITE);
+        
         Rectangle fxRect = {
             beam->Position.x,
             beam->Position.y,
@@ -149,7 +154,7 @@ void DrawBeam(Beam* beam) {
             fxRect,
             fxOrigin,
             beam->Rotation,
-            Fade(WHITE, powf(1.0f - FireProgress, 2.0f) * 0.4f)
+            Fade(WHITE, EaseQuadOut(beam->FxTimer, 1.0f, 0.0f - 1.0f, beam->FxDuration / 1.2f))
         );
     }
     

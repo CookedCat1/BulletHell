@@ -4,6 +4,12 @@
 #include "raylib.h"
 #include <stdbool.h>
 
+typedef struct {
+    float Warning;
+    float Fire;
+    float Fade;
+} BeamProfile;
+
 typedef enum {
     BeamInactive,
     BeamWarning,
@@ -28,6 +34,10 @@ typedef struct {
     
     float Timer;
     float Alpha;
+    BeamProfile Profile;
+    
+    float FxTimer;
+    float FxDuration;
 } Beam;
 
 void StartBeam(Beam* beam, Vector2 origin, float rotation, bool follow);

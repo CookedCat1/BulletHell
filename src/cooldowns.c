@@ -40,7 +40,7 @@ void UpdateCooldowns(float dt) {
 }
 
 void DrawCooldowns(void) {
-    Vector2 start = { SCREEN_WIDTH - 75, 70 };
+    Vector2 start = { GAME_WIDTH - 75, 70 };
     int visualIndex = 0;
     
     DrawText("Cooldowns", start.x - 9, start.y - 30, 15, WHITE);

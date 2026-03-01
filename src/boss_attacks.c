@@ -12,9 +12,6 @@
 #include <player.h>
 #include <helper.h>
 
-extern int ScreenWidth;
-extern int ScreenHeight;
-
 //  INTERNAL ATTACK SYSTEM TYPES
 
 typedef void (*AttackStartFunc)(void);
@@ -44,12 +41,16 @@ static void SpinAttack_Draw(void);
 static void HorizontalBeams1_Start(void);
 static void HorizontalBeams1_Update(float dt);
 
+static void Test1_Start(void);
+static void Test1_Update(float dt);
+
 //  ATTACK TABLE
 
 static BossAttackEntry AttackTable[] = {
     //{ CrossAttack_Start, CrossAttack_Update, NULL },
     {SpinAttack_Start, SpinAttack_Update, SpinAttack_Draw},
-    //{HorizontalBeams1_Start, HorizontalBeams1_Update, NULL},
+    {HorizontalBeams1_Start, HorizontalBeams1_Update, NULL},
+    //{Test1_Start, Test1_Update, NULL},
 };
 
 static const int AttackCount = sizeof(AttackTable) / sizeof(BossAttackEntry);
@@ -81,7 +82,7 @@ void DrawCurrentAttack(void) {
     if (AttackTable[CurrentAttackIndex].Draw != NULL) AttackTable[CurrentAttackIndex].Draw();
 }
 
-static Vector2 Center = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
+static Vector2 Center = {GAME_WIDTH / 2, GAME_HEIGHT / 2};
 
 //  CROSS BEAM ATTACK
 
@@ -90,7 +91,7 @@ static float Timer = 0.0f;
 
 static void DecreaseTimer(float dt) {
     Timer -= dt;
-    Timer = MinFloat(Timer, 0.0f);
+    Timer = MaxFloat(Timer, 0.0f);
 }
 
 static const int   CrossShotsMax = 6;
@@ -105,7 +106,7 @@ static void CrossAttack_Update(float dt) {
     DecreaseTimer(dt);
 
     if (Timer <= 0.0f) {
-        Vector2 bossPos = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}; //GetBossPos();
+        Vector2 bossPos = {GAME_WIDTH / 2, GAME_HEIGHT / 2}; //GetBossPos();
 
         float baseRotation = ShotsFired * 15.0f; // rotates slightly each shot
 
@@ -160,7 +161,7 @@ static void SpinAttack_Update(float dt) {
     float PlayerRadius = GetPlayerRadius();
 
     float collision = GetCollisionCircles(Center, DeadZoneRadius, GetPlayerPosition(), PlayerRadius);
-    collision = MaxFloat(collision, GetPlayerRadius());
+    collision = MinFloat(collision, GetPlayerRadius());
     
     if (collision / PlayerRadius >= 1.0f) HandleHit();
 
@@ -194,8 +195,8 @@ static void SpinAttack_Draw(void) {
 static float HB1_Interval = 0.4f;
 static int HB1_Max = 10;
 
-Vector2 Left = {100, SCREEN_HEIGHT / 2};
-Vector2 Right = {SCREEN_WIDTH - 100, SCREEN_HEIGHT / 2};
+Vector2 Left = {100, GAME_HEIGHT / 2};
+Vector2 Right = {GAME_WIDTH - 100, GAME_HEIGHT / 2};
 
 static void HorizontalBeams1_Start() {
     Timer = 0.0f;
@@ -225,4 +226,29 @@ static void HorizontalBeams1_Update(float dt) {
 
 static void HorizontalBeams1_Draw() {
     
+}
+
+static void Test1_Start() {
+    Timer = 0.01f;
+    
+    Vector2 asd = {GAME_WIDTH / 2, GAME_HEIGHT / 2};
+    SpawnBeam(asd, 0, false);
+    
+    asd = (Vector2) {GAME_WIDTH / 2, GAME_HEIGHT / 1.5};
+    SpawnBeam(asd, 0, false);
+    
+    asd = (Vector2) {GAME_WIDTH / 2, GAME_HEIGHT / 3};
+    SpawnBeam(asd, 0, false);
+}
+
+static void Test1_Update(float dt) {
+    DecreaseTimer(dt);
+    
+    if (Timer <= 0.0f) {
+        SetBeamProfile(1);
+        SetWarningStatus(true);
+        
+        CurrentAttackIndex = -1;
+        EndBossAttack();
+    }
 }
