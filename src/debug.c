@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <config.h>
+#include <game.h>
+
 #define DEBUG_MAX_LINES 64
 #define DEBUG_MAX_LENGTH 256
 #define DEBUG_FONT_SIZE 14
@@ -40,16 +43,15 @@ void AddDebug(const char* text, Color color) {
 void DrawDebug(void) {
     if (!ShouldDrawDebug) return;
     
-    int ScreenWidth = GetScreenWidth();
-    int ScreenHeight = GetScreenHeight();
+    Rectangle PlayArea = GetPlayArea();
 
-    int Y = ScreenHeight - 50 - DEBUG_PADDING - DEBUG_FONT_SIZE;
+    int Y = PlayArea.y + PlayArea.height - 50 - DEBUG_PADDING - DEBUG_FONT_SIZE;
 
     for (int i = 0; i < DebugCount; i++)
     {
         DrawText(
             DebugLines[i].Text,
-            DEBUG_PADDING,
+            DEBUG_PADDING + 15,
             Y,
             DEBUG_FONT_SIZE,
             DebugLines[i].TextColor

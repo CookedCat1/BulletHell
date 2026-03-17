@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdbool.h>
 
+#include <settings.h>
 #include <config.h>
 #include <beams.h>
 #include <player.h>
@@ -47,19 +48,21 @@ void UpdateGame(float dt) {
     }
     
     //screen shake
-    if (CheckPlayerHit()) {
-        ScreenShakeTime = 0.25f;
-        ScreenShakeStrength = 5.0f * (5 - GetPlayerLives());
-    }
-    
-    if (ScreenShakeTime > 0.0f)
-        ScreenShakeTime -= dt;
-    
-    Shake = (Vector2){0,0};
+    if (Settings.ScreenShake) {
+       if (CheckPlayerHit()) {
+           ScreenShakeTime = 0.25f;
+           ScreenShakeStrength = (100 - GetPlayerHp()) / 3;
+        }
+        
+        if (ScreenShakeTime > 0.0f)
+            ScreenShakeTime -= dt;
+        
+        Shake = (Vector2){0,0};
 
-    if (ScreenShakeTime > 0.0f) {
-        Shake.x = GetRandomValue(-ScreenShakeStrength, ScreenShakeStrength);
-        Shake.y = GetRandomValue(-ScreenShakeStrength, ScreenShakeStrength);
+        if (ScreenShakeTime > 0.0f) {
+            Shake.x = GetRandomValue(-ScreenShakeStrength, ScreenShakeStrength);
+            Shake.y = GetRandomValue(-ScreenShakeStrength, ScreenShakeStrength);
+        } 
     }
 }
 
@@ -90,7 +93,7 @@ void DrawGame(void) {
     DrawCooldowns();
     
     //lives
-    DrawText(TextFormat("Lives: %d", GetPlayerLives()), 15, GetScreenHeight() - 40, 25, WHITE);
+    DrawPlayerHp();
     
     EndMode2D();
 }

@@ -7,7 +7,7 @@
 
 #include <game.h>
 #include <menu.h>
-// #include <settings.h>
+#include <settings.h>
 
 #include <config.h>
 #include <helper.h>
@@ -16,7 +16,6 @@
 GameState CurrentGameState = Game_Playing;
 
 bool Paused = false;
-
 
 Vector2 GetVirtualMousePosition() {
     float screenWidth = GetScreenWidth();
@@ -39,7 +38,6 @@ Vector2 GetVirtualMousePosition() {
     return mouse;
 }
 
-
 int main(void) {
     InitWindow(GAME_WIDTH, GAME_HEIGHT, "Bullet hell");
     SetTargetFPS(2400);
@@ -48,6 +46,9 @@ int main(void) {
     InitGame();
     InitDebug();
     
+    InitSettings();
+    LoadSettings("saveData/settings.cfg");
+    
     //raygui init
     GuiLoadStyle("assets/test.rgs");
     
@@ -55,12 +56,14 @@ int main(void) {
     RenderTexture2D GameTarget = LoadRenderTexture(GAME_WIDTH, GAME_HEIGHT);
     SetTextureFilter(GameTarget.texture, TEXTURE_FILTER_BILINEAR); 
     
-    ToggleBorderlessWindowed();
-    //ToggleFullscreen();
+    if (Settings.Fullscreen) ToggleBorderlessWindowed();
         
     //SetWindowSize(1820, 200);
    
     while (!WindowShouldClose()) {
+        
+        if (WindowShouldClose) SaveSettings("saveData/settings.cfg");
+        
         double dt = GetFrameTime();
         
         if (IsKeyPressed(KEY_TAB)) {
@@ -85,6 +88,10 @@ int main(void) {
             case Game_Paused:
                 UpdatePauseMenu(dt, &CurrentGameState);
                 break;
+                
+                case Game_Settings:
+                    UpdateSettingsMenu(dt, &CurrentGameState);
+                    break;
         }
         
         GetVirtualMousePosition();
@@ -102,13 +109,19 @@ int main(void) {
                     DrawGame();
                     DrawPauseMenu(&CurrentGameState);
                     break;
+                    
+                case Game_Settings:
+                    DrawGame();
+                    DrawSettingsMenu(&CurrentGameState);
+                    break;
             }
             
             DrawDebug();
             
-            Vector2 FpsPos = {930, 10};
+            Rectangle PlayArea = GetPlayArea();
+            
+            Vector2 FpsPos = {PlayArea.x + PlayArea.width - 85, PlayArea.y - 25};
             DrawFPS(FpsPos.x, FpsPos.y);
-            DrawText(TextFormat("Screen Resolution: %dx%d", GetScreenWidth(), GetScreenHeight()), 930, 30, 18, GREEN);
             
             ClearDebug();
         EndTextureMode();

@@ -30,7 +30,6 @@ static int CurrentAttackIndex = -1;
 
 //  FORWARD DECLARATIONS OF ATTACKS
 
-// ---- Cross Beam ----
 static void CrossAttack_Start(void);
 static void CrossAttack_Update(float dt);
 
@@ -41,8 +40,8 @@ static void SpinAttack_Draw(void);
 static void HorizontalBeams1_Start(void);
 static void HorizontalBeams1_Update(float dt);
 
-static void Test1_Start(void);
-static void Test1_Update(float dt);
+static void CrossBeams1_Start(void);
+static void CrossBeams1_Update(float dt);
 
 //  ATTACK TABLE
 
@@ -50,7 +49,7 @@ static BossAttackEntry AttackTable[] = {
     //{ CrossAttack_Start, CrossAttack_Update, NULL },
     {SpinAttack_Start, SpinAttack_Update, SpinAttack_Draw},
     {HorizontalBeams1_Start, HorizontalBeams1_Update, NULL},
-    //{Test1_Start, Test1_Update, NULL},
+    {CrossBeams1_Start, CrossBeams1_Update, NULL},
 };
 
 static const int AttackCount = sizeof(AttackTable) / sizeof(BossAttackEntry);
@@ -228,23 +227,27 @@ static void HorizontalBeams1_Draw() {
     
 }
 
-static void Test1_Start() {
-    Timer = 0.01f;
-    
-    Vector2 asd = {GAME_WIDTH / 2, GAME_HEIGHT / 2};
-    SpawnBeam(asd, 0, false);
-    
-    asd = (Vector2) {GAME_WIDTH / 2, GAME_HEIGHT / 1.5};
-    SpawnBeam(asd, 0, false);
-    
-    asd = (Vector2) {GAME_WIDTH / 2, GAME_HEIGHT / 3};
-    SpawnBeam(asd, 0, false);
+// Cross beam attack
+static const float CB1_Interval = 0.65f;
+static const int CB1_Max = 10;
+
+static void CrossBeams1_Start() {
+    Timer = 0.0f;
+    ShotsFired = 0;
 }
 
-static void Test1_Update(float dt) {
+static void CrossBeams1_Update(float dt) {
     DecreaseTimer(dt);
     
     if (Timer <= 0.0f) {
+        SpawnBeam(GetPlayerPosition(), 0, true);
+        SpawnBeam(GetPlayerPosition(), 90, true);
+        
+        Timer = CB1_Interval;
+        ShotsFired++;
+    }
+    
+    if (ShotsFired >= CB1_Max) {
         SetBeamProfile(1);
         SetWarningStatus(true);
         

@@ -29,7 +29,7 @@ void StartBeam(Beam* beam, Vector2 origin, float rotation, bool follow) {
     beam->Following = follow;
     
     beam->Width = 40;
-    beam->Length = 2300.0f;
+    beam->Length = 2600.0f;
     
     beam->Profile = CurrentProfile;
     beam->Timer = ShowWarning? CurrentProfile.Warning : CurrentProfile.Fire; // warning duration

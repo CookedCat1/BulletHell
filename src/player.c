@@ -1,8 +1,10 @@
 #include "player.h"
 #include "raymath.h"
 #include <math.h>
+#include <reasings.h>
 
 #include <config.h>
+#include <settings.h>
 #include <cooldowns.h>
 #include <debug.h>
 #include <game.h>
@@ -11,29 +13,37 @@
 #define MAX_BULLETS 512
 #define MAX_TRAIL 12
 
+//movement
 static Vector2 PlayerPos;
 static const float PlayerRadius = 12.0f;
 static const float PlayerSpeed = 200.0f;
 
-static int Lives = 5;
+//player
+static float MaxPlayerHp = 100.0f;
+static float PlayerHp;
+static float DisplayHp;
 static bool RecentlyHit = false;
 static float IFrameTime = 0.0f;
 
+static float DamageTimer = 0; //dmg anim timer
+static const float DmgAnimTime = 0.5f;
+
+//shoot
 static const float ShootCooldown = 0.25f;
 static float ShootTimer = 0.0f;
-static bool AutoShoot = true;
 
+//dash
 static const float DashSpeed = 800.0f;
 static const float DashDuration = 0.08f;
 static const float DashCooldown = 0.5f;
-
-static float TrailSpawnTimer = 0.0f;
-static const float TrailSpawnInterval = 0.015f;
 
 static float DashTimer = 0.0f;
 static float DashTimeLeft = 0.0f;
 static bool IsDashing = false;
 static Vector2 DashVelocity = {0};
+
+static float TrailSpawnTimer = 0.0f;
+static const float TrailSpawnInterval = 0.015f;
 
 static bool RecentlyHitBoss = false;
 
@@ -63,45 +73,19 @@ void InitPlayer(void) {
     
     DashCD = AddCooldown("Dash", true);
     ShootCD = AddCooldown("Shoot", true);
+    
+    PlayerHp = MaxPlayerHp;
+    DisplayHp = PlayerHp;
 
     PlayerPos = (Vector2){ PlayArea.x + PLAY_WIDTH / 2.0f, PlayArea.y + PLAY_HEIGHT / 1.35f };
 }
 
-Vector2 GetPlayerMoveDirection(void) {
-    Vector2 dir = {0, 0};
-
-    if (IsKeyDown(KEY_W)) dir.y -= 1;
-    if (IsKeyDown(KEY_S)) dir.y += 1;
-    if (IsKeyDown(KEY_A)) dir.x -= 1;
-    if (IsKeyDown(KEY_D)) dir.x += 1;
-
-    if (Vector2Length(dir) > 0)
-        dir = Vector2Normalize(dir);
-
-    return dir;
-}
-
-void HandleHit(void)
-{
-    if (IFrameTime <= 0.0f)
-    {
-        Lives--;
-        IFrameTime = 1.5f;
-        RecentlyHit = true;
-    }
-}
-
-bool CheckBossHit(void) {
-    if (RecentlyHitBoss) {
-        RecentlyHitBoss = false;
-        return true;
-    }
-    
-    return false;
-}
-
 void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius)
 {
+    // recently hit reset
+    if (RecentlyHit) RecentlyHit = false;
+    DamageTimer = MaxFloat(DamageTimer - dt, 0.0f);
+    
     // Timers
     if (IFrameTime > 0.0f)
         IFrameTime -= dt;
@@ -121,7 +105,7 @@ void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius)
         if (Vector2Length(dir) > 0) {
             DashVelocity = Vector2Scale(dir, DashSpeed);
             DashTimeLeft = DashDuration;
-            IFrameTime = 0.25f;
+            IFrameTime += 0.25f;
             IsDashing = true;
             TriggerCooldown(DashCD, DashCooldown);
         }
@@ -156,7 +140,7 @@ void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius)
     }
 
     // bullet shooting
-    if ((IsMouseButtonDown(MOUSE_LEFT_BUTTON) || AutoShoot) && !OnCooldown(ShootCD)) {
+    if ((IsMouseButtonDown(MOUSE_LEFT_BUTTON) || Settings.AutoShoot) && !OnCooldown(ShootCD)) {
         TriggerCooldown(ShootCD, ShootCooldown);
 
         for (int i = 0; i < MAX_BULLETS; i++) {
@@ -211,18 +195,125 @@ void DrawPlayer(void)
     }
 }
 
+void DrawPlayerHp(void) {
+    Rectangle playArea = GetPlayArea();
+
+    float hpRatio = PlayerHp / MaxPlayerHp;
+    hpRatio = ClampFloat(hpRatio, 0.0f, 1.0f);
+    
+    Rectangle bar = {
+        playArea.x - 230,
+        playArea.y + playArea.height - 45,
+        200,
+        35
+    };
+    
+    DrawRectangleRec(bar, RED);
+    
+    float padding = 3.0f;
+    Rectangle fill = {
+        bar.x + padding,
+        bar.y + padding,
+        (bar.width - padding * 2) * hpRatio,
+        bar.height - padding * 2
+    };
+    
+    if (DamageTimer > 0.0f)
+    {
+        float MaxScale = 4.5f;
+
+        float t = DmgAnimTime - DamageTimer;
+        float FxScale = EaseCubicOut(t, 1.0f, MaxScale - 1.0f, DmgAnimTime);
+
+        float hpWidth = (bar.width - padding * 2) * (PlayerHp / MaxPlayerHp);
+        float displayWidth = (bar.width - padding * 2) * (DisplayHp / MaxPlayerHp);
+
+        float dmgWidth = displayWidth - hpWidth;
+
+        float baseHeight = bar.height - padding * 2;
+        float scaledHeight = baseHeight * FxScale;
+
+        float yOffset = (scaledHeight - baseHeight) / 2;
+        
+        // i have no fucking clue how chat gpt cooked this shape math up
+
+        Rectangle FxRec = {
+            bar.x + padding + hpWidth,
+            bar.y + padding - yOffset,
+            dmgWidth,
+            scaledHeight
+        };
+
+        float alpha = EaseCubicOut(t, 1.0f, 0.0f - 1.0f, DmgAnimTime);
+
+        DrawRectangleRec(FxRec, Fade(GREEN, alpha));
+    }
+
+    DrawRectangleRec(fill, GREEN);
+    
+    DrawRectangleLinesEx(bar, 3.0f, WHITE);
+    
+    const char* hpText = TextFormat("%.0f/%.0f", PlayerHp, MaxPlayerHp);
+
+    int fontSize = 20;
+    int textWidth = MeasureText(hpText, fontSize);
+
+    float textX = bar.x + (bar.width - textWidth) / 2.0f;
+    float textY = bar.y + (bar.height - fontSize) / 2.0f;
+
+    DrawText(hpText, textX, textY + 1, fontSize, Fade(WHITE, 0.95f));
+}
+
+// util functions
+
+void AddPlayerIFrames(float duration) {
+    IFrameTime += duration;
+}
+
+void HandleHit(void) { // HandleHit(float damage)
+    if (IFrameTime <= 0.0f) {
+        DisplayHp = PlayerHp;
+        DamageTimer = DmgAnimTime;
+        
+        PlayerHp -= 20.0f;
+        //ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
+        
+        IFrameTime += 1.5f;
+        RecentlyHit = true;
+    }
+}
+
+// getters
+Vector2 GetPlayerMoveDirection(void) {
+    Vector2 dir = {0, 0};
+
+    if (IsKeyDown(KEY_W)) dir.y -= 1;
+    if (IsKeyDown(KEY_S)) dir.y += 1;
+    if (IsKeyDown(KEY_A)) dir.x -= 1;
+    if (IsKeyDown(KEY_D)) dir.x += 1;
+
+    if (Vector2Length(dir) > 0)
+        dir = Vector2Normalize(dir);
+
+    return dir;
+}
 
 bool CheckPlayerHit(void) {
-    if (RecentlyHit) {
-        RecentlyHit = false;
+    if (RecentlyHit) return true;
+    return false;
+}
+
+bool CheckBossHit(void) {
+    if (RecentlyHitBoss) {
+        RecentlyHitBoss = false;
         return true;
     }
     
     return false;
 }
 
-int GetPlayerLives(void) {
-    return Lives;
+int GetPlayerHp(void) {
+    return PlayerHp;
 }
 
 Vector2 GetPlayerPosition(void) {

@@ -28,8 +28,7 @@ void DrawPauseMenu(GameState *State) {
 
     if (GuiButton((Rectangle){panel.x + 50, panel.y + 120, 350, 50}, "Settings"))
     {
-        ToggleBorderlessWindowed();
-        //*State = Game_Settings;
+        *State = Game_Settings;
     }
 
     if (GuiButton((Rectangle){panel.x + 50, panel.y + 180, 350, 50}, "Quit"))
