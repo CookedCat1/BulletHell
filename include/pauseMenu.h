@@ -1,5 +1,5 @@
-#ifndef MENU_H
-#define MENU_H
+#ifndef PAUSEMENU_H
+#define PAUSEMENU_H
 
 #include <gamestate.h>
 

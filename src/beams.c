@@ -81,8 +81,9 @@ void UpdateBeam(Beam* beam, float dt) {
                 float localX = diff.x * cosf(angleRad) - diff.y * sinf(angleRad);
                 float localY = diff.x * sinf(angleRad) + diff.y * cosf(angleRad);
 
+                //collision
                 if (localX >= -beam->Length / 2 && localX <=  beam->Length / 2 && fabsf(localY) <= beam->Width / 2) {
-                    HandleHit();
+                    HandleHit(20.0f);
                 }
                 
                 beam->CheckedHit = true;

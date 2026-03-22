@@ -4,7 +4,9 @@
 typedef enum {
     Game_Playing,
     Game_Paused,
-    Game_Settings
+    Game_Settings,
+    Game_MainMenu,
+    Game_Loadout,
 } GameState;
 
 #endif

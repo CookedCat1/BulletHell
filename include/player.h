@@ -11,8 +11,9 @@ void DrawPlayer(void);
 void DrawPlayerHp(void);
 
 // util functions
+void AddPlayerVelocity(Vector2 v);
 void AddPlayerIFrames(float duration);
-void HandleHit(void);
+void HandleHit(float damage);
 
 // getters
 Vector2 GetPlayerPosition(void);

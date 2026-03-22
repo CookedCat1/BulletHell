@@ -162,7 +162,7 @@ static void SpinAttack_Update(float dt) {
     float collision = GetCollisionCircles(Center, DeadZoneRadius, GetPlayerPosition(), PlayerRadius);
     collision = MinFloat(collision, GetPlayerRadius());
     
-    if (collision / PlayerRadius >= 1.0f) HandleHit();
+    if (collision / PlayerRadius >= 1.0f) HandleHit(10.0f);
 
     if (ShotsFired >= SpinBeamsMax) {
         SetBeamProfile(1);

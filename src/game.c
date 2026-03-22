@@ -11,6 +11,7 @@
 #include <cooldowns.h>
 #include <helper.h>
 #include <debug.h>
+#include <ability.h>
 
 Beam BossBeams[MAX_BEAMS] = {0};
 
@@ -37,7 +38,8 @@ void UpdateGame(float dt) {
     // frame updates
     UpdatePlayer(dt, GetBossPos(), GetBossRadius());
     UpdateBoss(dt);
-    UpdateCooldowns(dt);
+    UpdateCooldowns(dt);    
+    UpdateAbilities(dt);
     
     if (CheckBossHit()) {
         DamageBoss(1.0f);
@@ -82,6 +84,7 @@ void DrawGame(void) {
     DrawBoss();
     
     //player
+    DrawAbilities();
     DrawPlayer();
     
     DrawRectangleLinesEx(PlayArea, 3, WHITE);

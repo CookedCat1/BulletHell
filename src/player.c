@@ -9,14 +9,15 @@
 #include <debug.h>
 #include <game.h>
 #include <helper.h>
+#include <ability.h>
 
 #define MAX_BULLETS 512
-#define MAX_TRAIL 12
 
 //movement
 static Vector2 PlayerPos;
 static const float PlayerRadius = 12.0f;
 static const float PlayerSpeed = 200.0f;
+static Vector2 Velocity = {0};
 
 //player
 static float MaxPlayerHp = 100.0f;
@@ -31,19 +32,6 @@ static const float DmgAnimTime = 0.5f;
 //shoot
 static const float ShootCooldown = 0.25f;
 static float ShootTimer = 0.0f;
-
-//dash
-static const float DashSpeed = 800.0f;
-static const float DashDuration = 0.08f;
-static const float DashCooldown = 0.5f;
-
-static float DashTimer = 0.0f;
-static float DashTimeLeft = 0.0f;
-static bool IsDashing = false;
-static Vector2 DashVelocity = {0};
-
-static float TrailSpawnTimer = 0.0f;
-static const float TrailSpawnInterval = 0.015f;
 
 static bool RecentlyHitBoss = false;
 
@@ -61,9 +49,7 @@ typedef struct {
 } TrailPoint;
 
 static Bullet Bullets[MAX_BULLETS];
-static TrailPoint DashTrail[MAX_TRAIL];
 
-CooldownID DashCD;
 CooldownID ShootCD;
 
 // ===== Public API =====
@@ -71,8 +57,7 @@ CooldownID ShootCD;
 void InitPlayer(void) {
     PlayArea = GetPlayArea();
     
-    DashCD = AddCooldown("Dash", true);
-    ShootCD = AddCooldown("Shoot", true);
+    ShootCD = AddCooldown("Shoot", false);
     
     PlayerHp = MaxPlayerHp;
     DisplayHp = PlayerHp;
@@ -80,8 +65,7 @@ void InitPlayer(void) {
     PlayerPos = (Vector2){ PlayArea.x + PLAY_WIDTH / 2.0f, PlayArea.y + PLAY_HEIGHT / 1.35f };
 }
 
-void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius)
-{
+void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius) {    
     // recently hit reset
     if (RecentlyHit) RecentlyHit = false;
     DamageTimer = MaxFloat(DamageTimer - dt, 0.0f);
@@ -95,49 +79,18 @@ void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius)
     // Movement
     Vector2 moveDir = GetPlayerMoveDirection();
     PlayerPos = Vector2Add(PlayerPos, Vector2Scale(moveDir, PlayerSpeed * dt));
+    
+    PlayerPos = Vector2Add(PlayerPos, Vector2Scale(Velocity, dt));
+    
+    //velocity reset
+    Velocity = (Vector2) {0};
 
     PlayerPos.x = ClampFloat(PlayerPos.x, PlayArea.x + PlayerRadius + 2, PlayArea.x + PLAY_WIDTH - PlayerRadius - 2);
     PlayerPos.y = ClampFloat(PlayerPos.y, PlayArea.y + PlayerRadius + 2, PlayArea.y + PLAY_HEIGHT - PlayerRadius - 2);
 
-    // Dash
-    if (IsKeyPressed(KEY_SPACE) && !OnCooldown(DashCD)) {
-        Vector2 dir = GetPlayerMoveDirection();
-        if (Vector2Length(dir) > 0) {
-            DashVelocity = Vector2Scale(dir, DashSpeed);
-            DashTimeLeft = DashDuration;
-            IFrameTime += 0.25f;
-            IsDashing = true;
-            TriggerCooldown(DashCD, DashCooldown);
-        }
-    }
-
-    if (IsDashing) {
-        TrailSpawnTimer -= dt;
-        DashTimeLeft -= dt;
-        
-        PlayerPos = Vector2Add(PlayerPos, Vector2Scale(DashVelocity, dt));
-
-        //dash trails
-        if (TrailSpawnTimer <= 0.0f) {
-            TrailSpawnTimer = TrailSpawnInterval;
-
-            for (int i = MAX_TRAIL - 1; i > 0; i--)
-                DashTrail[i] = DashTrail[i - 1];
-
-            DashTrail[0].Pos = PlayerPos;
-            DashTrail[0].Life = 1.0f;
-        }
-        
-        if (DashTimeLeft <= 0.0f) {
-            IsDashing = false;
-            DashVelocity = (Vector2){0};
-        }
-    }
-    
-    for (int i = 0; i < MAX_TRAIL; i++) {
-    if (DashTrail[i].Life > 0.0f)
-        DashTrail[i].Life -= dt * 4.0f;
-    }
+    // PrimaryKeybind
+    if (IsKeyPressed(KEY_SPACE)) StartAbility(SLOT_PRIMARY);
+    if (IsKeyPressed(KEY_E)) StartAbility(SLOT_SECONDARY);
 
     // bullet shooting
     if ((IsMouseButtonDown(MOUSE_LEFT_BUTTON) || Settings.AutoShoot) && !OnCooldown(ShootCD)) {
@@ -180,13 +133,6 @@ void DrawPlayer(void)
 
     if (!Flicker)
         DrawCircleV(PlayerPos, PlayerRadius, GREEN);
-    
-    for (int i = 0; i < MAX_TRAIL; i++) {
-        if (DashTrail[i].Life > 0.0f) {
-            Color c = Fade(GREEN, DashTrail[i].Life * 0.4f);
-            DrawCircleV(DashTrail[i].Pos, PlayerRadius, c);
-        }
-    }
 
     for (int i = 0; i < MAX_BULLETS; i++)
     {
@@ -253,7 +199,7 @@ void DrawPlayerHp(void) {
     
     DrawRectangleLinesEx(bar, 3.0f, WHITE);
     
-    const char* hpText = TextFormat("%.0f/%.0f", PlayerHp, MaxPlayerHp);
+    const char* hpText = TextFormat("%.1f/%.0f", PlayerHp, MaxPlayerHp);
 
     int fontSize = 20;
     int textWidth = MeasureText(hpText, fontSize);
@@ -270,12 +216,22 @@ void AddPlayerIFrames(float duration) {
     IFrameTime += duration;
 }
 
-void HandleHit(void) { // HandleHit(float damage)
+void AddPlayerVelocity(Vector2 v) {
+    Velocity = Vector2Add(Velocity, v);
+}
+
+void HandleHit(float damage) { // HandleHit(float damage)
+    //healing
+    if (damage < 0) {
+        PlayerHp -= damage;
+        return;
+    }
+
     if (IFrameTime <= 0.0f) {
         DisplayHp = PlayerHp;
         DamageTimer = DmgAnimTime;
         
-        PlayerHp -= 20.0f;
+        PlayerHp -= damage;
         //ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
         
         IFrameTime += 1.5f;

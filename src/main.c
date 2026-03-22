@@ -6,8 +6,10 @@
 #include <raygui.h>
 
 #include <game.h>
-#include <menu.h>
+#include <loadout.h>
+#include <pauseMenu.h>
 #include <settings.h>
+#include <ability.h>
 
 #include <config.h>
 #include <helper.h>
@@ -45,6 +47,7 @@ int main(void) {
     // Inits
     InitGame();
     InitDebug();
+    InitAbilities();
     
     InitSettings();
     LoadSettings("saveData/settings.cfg");
@@ -74,6 +77,14 @@ int main(void) {
             }
         }
         
+        if (IsKeyPressed(KEY_L)) {
+            if (CurrentGameState == Game_Playing) {
+                CurrentGameState = Game_Loadout;
+            } else {
+                CurrentGameState = Game_Playing;
+            }
+        }
+        
         if (IsKeyPressed(KEY_P)) Paused = !Paused;
         
         AddDebug(TextFormat("Paused: %d", Paused), Paused? RED : GREEN);
@@ -82,16 +93,18 @@ int main(void) {
         switch (CurrentGameState) {
             case Game_Playing:
                 UpdateGame(dt);
-                
                 break;
                 
             case Game_Paused:
                 UpdatePauseMenu(dt, &CurrentGameState);
                 break;
                 
-                case Game_Settings:
-                    UpdateSettingsMenu(dt, &CurrentGameState);
-                    break;
+            case Game_Settings:
+                UpdateSettingsMenu(dt, &CurrentGameState);
+                break;
+                
+            case Game_Loadout:
+                UpdateLoadout(dt);
         }
         
         GetVirtualMousePosition();
@@ -114,6 +127,9 @@ int main(void) {
                     DrawGame();
                     DrawSettingsMenu(&CurrentGameState);
                     break;
+                    
+                case Game_Loadout:
+                    DrawLoadout();
             }
             
             DrawDebug();

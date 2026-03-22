@@ -1,139 +1,122 @@
 #include <raylib.h>
+#include <stddef.h>
+#include <stdio.h>
 
 #include <ability.h>
+#include <cooldowns.h>
 
+//ability includes
+#include <dash.h>
+#include <healPool.h>
+
+static EquippedSlot Slots[ABILITY_SLOT_COUNT];
 static Ability AllAbilities[ABILITY_COUNT];
-static Ability* EquippedAbilities[ABILITY_SLOT_COUNT];
 static AbilityID EquippedIDs[ABILITY_SLOT_COUNT];
 
-// ABILITY FUNCTIONS
-//dash
-void StartDash(void) {
+void InitAbilities(void) {
+    InitDash();
+    InitHealPool();
     
-};
-
-void UpdateDash(float dt) {
-    
-};
-
-void DrawDash() {
-    
-};
-
-// bomb
-void StartBomb() {
-};
-void UpdateBomb(float dt) {
-};
-void DrawBomb() {
-};
-
-void InitAbilities() {
-    AllAbilities[ABILITY_DASH] = (Ability){
-        .Name = "Dash",
-        .Cooldown = 1.0f,
-        .Description = "IFrame dash",
-        
-        .Start = StartDash,
-        .Update = UpdateDash,
-        .Draw = DrawDash
-    };
-
+    //Primary
+    AllAbilities[ABILITY_DASH] = GetDashAbility();
     AllAbilities[ABILITY_SHIELD] = (Ability){
-        .Name = "Shield",
-        .Cooldown = 3.0f,
+        .Name        = "Shield",
+        .Cooldown    = 3.0f,
         .Description = "",
-        
-        .Start = NULL,
-        .Update = NULL,
-        .Draw = NULL
+        .Start       = NULL,
+        .Update      = NULL,
+        .Draw        = NULL
     };
-
+    
+    //Secondary
     AllAbilities[ABILITY_BOMB] = (Ability){
-        .Name = "Bomb",
-        .Cooldown = 5.0f,
+        .Name        = "Bomb",
+        .Cooldown    = 5.0f,
         .Description = "",
-        
-        .Start = StartBomb,
-        .Update = UpdateBomb,
-        .Draw = DrawBomb
+        .Start       = NULL,
+        .Update      = NULL,
+        .Draw        = NULL
     };
-
     AllAbilities[ABILITY_SUPERCHARGE] = (Ability){
-        .Name = "Supercharge",
-        .Cooldown = 8.0f,
+        .Name        = "Supercharge",
+        .Cooldown    = 8.0f,
         .Description = "",
-        
-        .Start = NULL,
-        .Update = NULL,
-        .Draw = NULL
+        .Start       = NULL,
+        .Update      = NULL,
+        .Draw        = NULL
     };
+    
+    AllAbilities[ABILITY_HEALPOOL] = GetHealPoolAbility();
 
     EquippedIDs[SLOT_PRIMARY] = ABILITY_DASH;
-    EquippedIDs[SLOT_SECONDARY] = ABILITY_BOMB;
+    EquippedIDs[SLOT_SECONDARY] = ABILITY_HEALPOOL;
 
-    EquippedAbilities[SLOT_PRIMARY] = &AllAbilities[EquippedIDs[SLOT_PRIMARY]];
-    EquippedAbilities[SLOT_SECONDARY] = &AllAbilities[EquippedIDs[SLOT_SECONDARY]];
-};
+    for (int i = 0; i < ABILITY_SLOT_COUNT; i++) {
+        Slots[i].ability = &AllAbilities[EquippedIDs[i]];
+        Slots[i].Active = false;
+    }
+}
+
+void StartAbility(AbilitySlot slot) {
+    EquippedSlot* s = &Slots[slot];
+    
+    if (!s->ability) return;
+    Ability* ability = s->ability;
+    
+    if (ability->CooldownID && OnCooldown(ability->CooldownID))  return;
+
+    s->Active = true;
+    TriggerCooldown(ability->CooldownID, ability->Cooldown);
+
+    if (ability->Start) ability->Start();
+}
+
+void DeactivateAbility(AbilitySlot slot) {
+    Slots[slot].Active = false;
+}
+
+void UpdateAbilities(float dt) {
+    for (int i = 0; i < ABILITY_SLOT_COUNT; i++) {
+        EquippedSlot* slot = &Slots[i];
+
+        if (slot->Active && slot->ability->Update) slot->ability->Update(dt);
+    }
+}
+
+void DrawAbilities(void) {
+    for (int i = 0; i < ABILITY_SLOT_COUNT; i++) {
+        EquippedSlot* slot = &Slots[i];
+        
+        if (slot->Active && slot->ability->Draw) slot->ability->Draw();
+    }
+}
+
+void EquipAbility(AbilitySlot slot, AbilityID id) {
+    Ability* ability = &AllAbilities[id];
+    
+    if ((slot == SLOT_PRIMARY && ability->Type != ABILITY_TYPE_PRIMARY) 
+       || (slot == SLOT_SECONDARY && ability->Type != ABILITY_TYPE_SECONDARY)) return;
+    
+    EquippedIDs[slot] = id;
+    Slots[slot].ability = ability;
+    Slots[slot].Active = false;
+}
 
 void SaveAbilities(const char* file) {
     FILE* f = fopen(file, "w");
     if (!f) return;
-    
-    fprintf(f, "%d %d",
-        EquippedIDs[SLOT_PRIMARY],
-        EquippedIDs[SLOT_SECONDARY]
-    );
-    
+    fprintf(f, "%d %d", EquippedIDs[SLOT_PRIMARY], EquippedIDs[SLOT_SECONDARY]);
     fclose(f);
-;
+}
 
 void LoadAbilities(const char* file) {
     FILE* f = fopen(file, "r");
     if (!f) return;
-    
-    fscanf(f, "%d %d",
-        &EquippedIDs[SLOT_PRIMARY],
-        &EquippedIDs[SLOT_SECONDARY]
-    );
-
+    fscanf(f, "%d %d", &EquippedIDs[SLOT_PRIMARY], &EquippedIDs[SLOT_SECONDARY]);
     fclose(f);
 
-    EquippedAbilities[SLOT_PRIMARY] = &AllAbilities[EquippedIDs[SLOT_PRIMARY]];
-    EquippedAbilities[SLOT_SECONDARY] = &AllAbilities[EquippedIDs[SLOT_SECONDARY]];
-};
-
-void StartAbility(AbilitySlot slot) {
-    Ability* ability = EquippedAbilities[slot];
-
-    if (!ability) return;
-
-    if (ability->Start)
-        ability->Start();
-};
-
-void UpdateAbilities(float dt) {
     for (int i = 0; i < ABILITY_SLOT_COUNT; i++) {
-        Ability* ability = EquippedAbilities[i];
-
-        if (!ability) continue;
-
-        if (ability->Update)
-            ability->Update(dt);
+        Slots[i].ability = &AllAbilities[EquippedIDs[i]];
+        Slots[i].Active = false;
     }
-};
-
-void DrawAbilities(void) {
-    for (int i = 0; i < ABILITY_SLOT_COUNT; i++) {
-        Ability* ability = EquippedAbilities[i];
-
-        if (!ability) continue;
-
-        if (ability->Draw)
-            ability->Draw();
-    }
-};
-
-Ability GetAbilityData(const char* name) {
-    //return the ability
-};
+}

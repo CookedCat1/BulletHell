@@ -1,41 +1,62 @@
-#ifndef ABILITY.H
-#define ABILITY.H
+#ifndef ABILITY_H
+#define ABILITY_H
 
-typedef struct {
-    const char* Name;
-    float Cooldown;
-    const char* Description;
-    
-    void (*Start)(void);
-    void (*Update)(float dt);
-    void (*Draw)(void);
-    
-} Ability;
+#include <cooldowns.h>
 
 typedef enum {
+    //primary
     ABILITY_DASH,
     ABILITY_SHIELD,
+    
+    //secondary
     ABILITY_BOMB,
     ABILITY_SUPERCHARGE,
-
+    ABILITY_HEALPOOL,
+    
     ABILITY_COUNT
-
 } AbilityID;
 
 typedef enum {
     SLOT_PRIMARY,
     SLOT_SECONDARY,
-
+    
     ABILITY_SLOT_COUNT
+} AbilitySlot;
+
+typedef enum {
+    ABILITY_TYPE_PRIMARY,
+    ABILITY_TYPE_SECONDARY
 } AbilityType;
 
-void InitAbilities(void);
+typedef struct {
+    const char* Name;
+    const char* Description;
+    float Cooldown;
+    CooldownID CooldownID;
+    
+    AbilityType Type;
 
-void SaveAbilities(const char* file);
-void LoadAbilities(const char* file);
+    void (*Start)(void);
+    void (*Update)(float dt);
+    void (*Draw)(void);
+} Ability;
 
-void StartAbility(AbilityType type);
-void UpdateAbilities(float dt);
-void DrawAbilities(void);
+typedef struct {
+    Ability* ability;
+    bool Active;
+} EquippedSlot;
+
+void  InitAbilities(void);
+
+void  StartAbility(AbilitySlot slot);
+void  DeactivateAbility(AbilitySlot slot);
+
+void  UpdateAbilities(float dt);
+void  DrawAbilities(void);
+
+void  EquipAbility(AbilitySlot slot, AbilityID id);
+
+void  SaveAbilities(const char* file);
+void  LoadAbilities(const char* file);
 
 #endif
