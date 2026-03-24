@@ -22,7 +22,10 @@ void InitAbilities(void) {
     AllAbilities[ABILITY_SHIELD] = (Ability){
         .Name        = "Shield",
         .Cooldown    = 3.0f,
-        .Description = "",
+        .Description = "shiel",
+        
+        .Type = ABILITY_TYPE_PRIMARY,
+        
         .Start       = NULL,
         .Update      = NULL,
         .Draw        = NULL
@@ -32,7 +35,10 @@ void InitAbilities(void) {
     AllAbilities[ABILITY_BOMB] = (Ability){
         .Name        = "Bomb",
         .Cooldown    = 5.0f,
-        .Description = "",
+        .Description = "a bomb that is thrown at the nigga boss and it goes boom",
+        
+        .Type = ABILITY_TYPE_SECONDARY,
+        
         .Start       = NULL,
         .Update      = NULL,
         .Draw        = NULL
@@ -40,7 +46,10 @@ void InitAbilities(void) {
     AllAbilities[ABILITY_SUPERCHARGE] = (Ability){
         .Name        = "Supercharge",
         .Cooldown    = 8.0f,
-        .Description = "",
+        .Description = "bullets go ratatatata vroooooom",
+        
+        .Type = ABILITY_TYPE_SECONDARY,
+        
         .Start       = NULL,
         .Update      = NULL,
         .Draw        = NULL
@@ -119,4 +128,21 @@ void LoadAbilities(const char* file) {
         Slots[i].ability = &AllAbilities[EquippedIDs[i]];
         Slots[i].Active = false;
     }
+}
+
+//getters
+Ability* GetAbilityByID(AbilityID id) {
+    return &AllAbilities[id];
+}
+
+Ability* GetAllAbilities() {
+    return AllAbilities;
+}
+
+int GetAbilityCount() {
+    return ABILITY_COUNT;
+}
+
+bool IsAbilityEquipped(AbilityID id) {
+    return EquippedIDs[SLOT_PRIMARY] == id || EquippedIDs[SLOT_SECONDARY] == id;
 }

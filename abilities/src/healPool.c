@@ -19,7 +19,7 @@ void InitHealPool(void) {
 
     HealPoolAbility = (Ability) {
         .Name = "Heal Pool",
-        .Description = "A healing pool that upon use, heals the player 0.5 hp every 0.1s, total healing : 10hp",
+        .Description = "A healing pool that upon use,heals the player 0.5 hp every 0.1s                               Total healing : 10hp",
         .Cooldown = 10,
         .CooldownID = HealPoolCD,
         

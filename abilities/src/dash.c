@@ -43,7 +43,7 @@ void InitDash() {
     
     DashAbility = (Ability){
         .Name = "Dash",
-        .Description = "IFrame dash",
+        .Description = "A short dash that temprarilygrants the player IFrames,  allowing them to dash throughattacks",
         .Cooldown = DashCooldown,
         .CooldownID = DashCD,
         

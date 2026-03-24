@@ -59,4 +59,10 @@ void  EquipAbility(AbilitySlot slot, AbilityID id);
 void  SaveAbilities(const char* file);
 void  LoadAbilities(const char* file);
 
+//getters
+Ability* GetAbilityByID(AbilityID id);
+Ability* GetAllAbilities(void);
+int GetAbilityCount(void);
+bool IsAbilityEquipped(AbilityID id);
+
 #endif

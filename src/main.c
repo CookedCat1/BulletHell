@@ -48,6 +48,7 @@ int main(void) {
     InitGame();
     InitDebug();
     InitAbilities();
+    InitLoadout();
     
     InitSettings();
     LoadSettings("saveData/settings.cfg");
