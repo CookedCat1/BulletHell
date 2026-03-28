@@ -8,10 +8,15 @@
 static AbilityID SelectedAbility = -1;
 Ability* abilities;
 
+Sound ClickSound;
+
 extern Vector2 GetVirtualMousePosition();
 
 void InitLoadout() {
     abilities = GetAllAbilities();
+    
+    ClickSound = LoadSound("assets/click-sound.mp3");
+    SetSoundVolume(ClickSound, 0.3f);
 }
 
 void UpdateLoadout(float dt) {
@@ -65,10 +70,23 @@ void DrawLoadout() {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 BorderColor = GREEN;
                 SelectedAbility = i;
+                
+                PlaySound(ClickSound);
             }
         } 
         
         if (i == SelectedAbility) BorderColor = GREEN;
+        
+        if (ability->Icon.id != 0) {
+            DrawTexturePro(
+                ability->Icon,
+                (Rectangle){0, 0, ability->Icon.width, ability->Icon.height},
+                AbilityButton,
+                (Vector2){0, 0},
+                0.0f,
+                WHITE
+            );
+        }
         
         DrawRectangleLinesEx(AbilityButton, 2, BorderColor);
     }
@@ -80,9 +98,28 @@ void DrawLoadout() {
     
     if (SelectedAbility != -1) {
         
-        DrawRectangleLinesEx((Rectangle){1200, 125, 200, 200}, 3, WHITE);
-        
         Ability* CurrentAbility = GetAbilityByID(SelectedAbility);
+        
+        if (CurrentAbility->BackDropColor.a > 0) {
+            DrawRectangleRec(SideBar, Fade(CurrentAbility->BackDropColor, 0.2f));
+        }
+        
+        //image
+        Rectangle ImageBox = {1200, 125, 200, 200};
+        
+        if (CurrentAbility->Icon.id != 0) {
+            DrawTexturePro(
+                CurrentAbility->Icon,
+                (Rectangle){0, 0, CurrentAbility->Icon.width, CurrentAbility->Icon.height},
+                ImageBox,
+                (Vector2){0, 0},
+                0.0f,
+                WHITE
+            );
+        }
+        
+        DrawRectangleLinesEx(ImageBox, 3, WHITE);
+        
         const char* TypeText = CurrentAbility->Type == ABILITY_TYPE_PRIMARY ? "Primary" : "Secondary";
 
         int TypeFontSize = 30;

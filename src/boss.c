@@ -26,7 +26,7 @@ void InitBoss() {
     PlayArea = GetPlayArea();
     
     BossPos = (Vector2){ PLAY_WIDTH / 2 + PlayArea.x, PLAY_HEIGHT / 8 + PlayArea.y};
-    BossHp = 100;
+    BossHp = StartingBossHp;
     
     CurrentState = BossIdle;
     CurrentAttack = BossAttackNone;

@@ -11,4 +11,6 @@ void DrawDash();
 
 Ability GetDashAbility();
 
+void CleanupDash(void);
+
 #endif

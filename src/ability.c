@@ -25,6 +25,9 @@ void InitAbilities(void) {
         .Description = "shiel",
         
         .Type = ABILITY_TYPE_PRIMARY,
+        .BackDropColor = BLUE,
+        
+        .Icon = LoadTexture("assets/ShieldIcon.png"),
         
         .Start       = NULL,
         .Update      = NULL,
@@ -38,6 +41,9 @@ void InitAbilities(void) {
         .Description = "a bomb that is thrown at the nigga boss and it goes boom",
         
         .Type = ABILITY_TYPE_SECONDARY,
+        .BackDropColor = ORANGE,
+        
+        .Icon = LoadTexture("assets/BombIcon.png"),
         
         .Start       = NULL,
         .Update      = NULL,
@@ -49,6 +55,7 @@ void InitAbilities(void) {
         .Description = "bullets go ratatatata vroooooom",
         
         .Type = ABILITY_TYPE_SECONDARY,
+        .BackDropColor = RED,
         
         .Start       = NULL,
         .Update      = NULL,
@@ -128,6 +135,14 @@ void LoadAbilities(const char* file) {
         Slots[i].ability = &AllAbilities[EquippedIDs[i]];
         Slots[i].Active = false;
     }
+}
+
+void CleanupAbilities() {
+    CleanupHealPool();
+    CleanupDash();
+    
+    UnloadTexture(AllAbilities[ABILITY_BOMB].Icon);
+    UnloadTexture(AllAbilities[ABILITY_SHIELD].Icon);
 }
 
 //getters

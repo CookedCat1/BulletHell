@@ -8,6 +8,7 @@ typedef struct
 {
     bool AutoShoot;
     bool Fullscreen;
+    bool ShowSnowParticles;
     
     bool ScreenShake;
     bool VSync;

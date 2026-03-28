@@ -1,4 +1,5 @@
-#include "raylib.h"
+#include <raylib.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "raymath.h"
@@ -8,8 +9,11 @@
 #include <game.h>
 #include <loadout.h>
 #include <pauseMenu.h>
+#include <mainMenu.h>
 #include <settings.h>
 #include <ability.h>
+
+#include <snowParticles.h>
 
 #include <config.h>
 #include <helper.h>
@@ -42,6 +46,7 @@ Vector2 GetVirtualMousePosition() {
 
 int main(void) {
     InitWindow(GAME_WIDTH, GAME_HEIGHT, "Bullet hell");
+    InitAudioDevice();
     SetTargetFPS(2400);
     
     // Inits
@@ -51,7 +56,9 @@ int main(void) {
     InitLoadout();
     
     InitSettings();
+    printf("firing load function \n");
     LoadSettings("saveData/settings.cfg");
+    printf("Should have loaded settings \n");
     
     //raygui init
     GuiLoadStyle("assets/test.rgs");
@@ -63,11 +70,8 @@ int main(void) {
     if (Settings.Fullscreen) ToggleBorderlessWindowed();
         
     //SetWindowSize(1820, 200);
-   
+    
     while (!WindowShouldClose()) {
-        
-        if (WindowShouldClose) SaveSettings("saveData/settings.cfg");
-        
         double dt = GetFrameTime();
         
         if (IsKeyPressed(KEY_TAB)) {
@@ -86,11 +90,19 @@ int main(void) {
             }
         }
         
+        if (IsKeyPressed(KEY_M)) {
+            CurrentGameState = Game_MainMenu;
+        }
+        
         if (IsKeyPressed(KEY_P)) Paused = !Paused;
         
         AddDebug(TextFormat("Paused: %d", Paused), Paused? RED : GREEN);
         
         // updates
+        if (Settings.ShowSnowParticles) {
+            UpdateSnowParticles(dt);
+        }
+        
         switch (CurrentGameState) {
             case Game_Playing:
                 UpdateGame(dt);
@@ -106,6 +118,11 @@ int main(void) {
                 
             case Game_Loadout:
                 UpdateLoadout(dt);
+                break;
+                
+            case Game_MainMenu:
+                UpdateMainMenu(dt);
+                break;
         }
         
         GetVirtualMousePosition();
@@ -113,6 +130,11 @@ int main(void) {
         //game drawing
         BeginTextureMode(GameTarget);
             ClearBackground(BLACK);
+            
+            AddDebug(TextFormat("Show particles: %d", Settings.ShowSnowParticles), WHITE);
+            if (Settings.ShowSnowParticles) {
+                DrawSnowParticles();
+            }
                     
             switch (CurrentGameState) {
                 case Game_Playing:
@@ -131,6 +153,11 @@ int main(void) {
                     
                 case Game_Loadout:
                     DrawLoadout();
+                    break;
+                    
+                case Game_MainMenu:
+                    DrawMainMenu(&CurrentGameState);
+                    break;
             }
             
             DrawDebug();
@@ -171,8 +198,15 @@ int main(void) {
                 WHITE
             );
         EndDrawing();
-        
     }
-    CloseWindow();
+    
+    printf("Cleanup \n");
+            CleanupAbilities();
+            CloseAudioDevice();
+            SaveSettings("saveData/settings.cfg");
+            printf("Shouldve fired save settings \n");
+            
+            CloseWindow();
+    
     return 0;
 }

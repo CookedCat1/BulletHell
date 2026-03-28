@@ -49,6 +49,9 @@ void InitDash() {
         
         .Type = ABILITY_TYPE_PRIMARY,
         
+        .Icon = LoadTexture("assets/DashIcon.png"),
+        .BackDropColor = GRAY,
+        
         .Start = StartDash,
         .Update = UpdateDash,
         .Draw = DrawDash
@@ -121,4 +124,8 @@ void DrawDash() {
 
 Ability GetDashAbility(void) {
     return DashAbility;
+}
+
+void CleanupDash() {
+    UnloadTexture(DashAbility.Icon);
 }

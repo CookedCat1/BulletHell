@@ -35,6 +35,9 @@ typedef struct {
     CooldownID CooldownID;
     
     AbilityType Type;
+    
+    Texture2D Icon;
+    Color BackDropColor;
 
     void (*Start)(void);
     void (*Update)(float dt);
@@ -46,18 +49,20 @@ typedef struct {
     bool Active;
 } EquippedSlot;
 
-void  InitAbilities(void);
+void InitAbilities(void);
 
-void  StartAbility(AbilitySlot slot);
-void  DeactivateAbility(AbilitySlot slot);
+void StartAbility(AbilitySlot slot);
+void DeactivateAbility(AbilitySlot slot);
 
-void  UpdateAbilities(float dt);
-void  DrawAbilities(void);
+void UpdateAbilities(float dt);
+void DrawAbilities(void);
 
-void  EquipAbility(AbilitySlot slot, AbilityID id);
+void EquipAbility(AbilitySlot slot, AbilityID id);
 
-void  SaveAbilities(const char* file);
-void  LoadAbilities(const char* file);
+void SaveAbilities(const char* file);
+void LoadAbilities(const char* file);
+
+void CleanupAbilities(void);
 
 //getters
 Ability* GetAbilityByID(AbilityID id);

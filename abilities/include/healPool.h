@@ -11,4 +11,6 @@ void DrawHealPool(void);
 
 Ability GetHealPoolAbility(void);
 
+void CleanupHealPool(void);
+
 #endif
