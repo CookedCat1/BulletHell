@@ -136,7 +136,7 @@ void DrawMainMenu(GameState *State) {
 
     if (GuiButton((Rectangle){panel.x, panel.y + 270, 575, 75}, "Quit"))
     {
-        CloseWindow();
+        *State = Game_Exit;
     }
     
     //Play

@@ -14,9 +14,9 @@ void UpdatePauseMenu(float dt, GameState *State) {
 void DrawPauseMenu(GameState *State) {
     Rectangle panel = { 
         GAME_WIDTH /2 - 225, 
-        GAME_HEIGHT /2 - 150, 
+        GAME_HEIGHT /2 - 162, 
         450, 
-        300 
+        325 
     };
 
     GuiPanel(panel, "Paused");
@@ -30,9 +30,13 @@ void DrawPauseMenu(GameState *State) {
     {
         *State = Game_Settings;
     }
+    
+    if (GuiButton((Rectangle){panel.x + 50, panel.y + 180, 350, 50}, "Return to menu")) {
+        *State = Game_MainMenu;
+    }
 
-    if (GuiButton((Rectangle){panel.x + 50, panel.y + 180, 350, 50}, "Quit"))
+    if (GuiButton((Rectangle){panel.x + 50, panel.y + 240, 350, 50}, "Quit"))
     {
-        CloseWindow();
+        *State = Game_Exit;
     }
 }

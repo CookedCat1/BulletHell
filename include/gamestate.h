@@ -7,6 +7,7 @@ typedef enum {
     Game_Settings,
     Game_MainMenu,
     Game_Loadout,
+    Game_Exit,
 } GameState;
 
 #endif

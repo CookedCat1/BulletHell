@@ -19,7 +19,7 @@
 #include <helper.h>
 #include <debug.h>
 
-GameState CurrentGameState = Game_Playing;
+GameState CurrentGameState = Game_MainMenu;
 
 bool Paused = false;
 
@@ -56,9 +56,7 @@ int main(void) {
     InitLoadout();
     
     InitSettings();
-    printf("firing load function \n");
     LoadSettings("saveData/settings.cfg");
-    printf("Should have loaded settings \n");
     
     //raygui init
     GuiLoadStyle("assets/test.rgs");
@@ -72,6 +70,9 @@ int main(void) {
     //SetWindowSize(1820, 200);
     
     while (!WindowShouldClose()) {
+        
+        if (CurrentGameState == Game_Exit) break;
+        
         double dt = GetFrameTime();
         
         if (IsKeyPressed(KEY_TAB)) {
@@ -164,8 +165,7 @@ int main(void) {
             
             Rectangle PlayArea = GetPlayArea();
             
-            Vector2 FpsPos = {PlayArea.x + PlayArea.width - 85, PlayArea.y - 25};
-            DrawFPS(FpsPos.x, FpsPos.y);
+            if (Settings.FPSCounter) DrawFPS(PlayArea.x + PlayArea.width - 85, PlayArea.y - 25);
             
             ClearDebug();
         EndTextureMode();
@@ -200,13 +200,11 @@ int main(void) {
         EndDrawing();
     }
     
-    printf("Cleanup \n");
-            CleanupAbilities();
-            CloseAudioDevice();
-            SaveSettings("saveData/settings.cfg");
-            printf("Shouldve fired save settings \n");
-            
-            CloseWindow();
+    CleanupAbilities();
+    CloseAudioDevice();
+    SaveSettings("saveData/settings.cfg");
+    
+    CloseWindow();
     
     return 0;
 }

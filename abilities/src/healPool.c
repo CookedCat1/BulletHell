@@ -49,7 +49,7 @@ void InitHealPool(void) {
         
         .Type = ABILITY_TYPE_SECONDARY,
         
-        .Icon = LoadTexture("assets/HealPoolIcon.png"),
+        .Icon = LoadTexture("assets/Textures/HealPoolIcon.png"),
         .BackDropColor = GREEN,
         
         .Start = StartHealPool,

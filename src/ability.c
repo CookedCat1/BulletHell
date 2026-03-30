@@ -27,7 +27,7 @@ void InitAbilities(void) {
         .Type = ABILITY_TYPE_PRIMARY,
         .BackDropColor = BLUE,
         
-        .Icon = LoadTexture("assets/ShieldIcon.png"),
+        .Icon = LoadTexture("assets/Textures/ShieldIcon.png"),
         
         .Start       = NULL,
         .Update      = NULL,
@@ -43,7 +43,7 @@ void InitAbilities(void) {
         .Type = ABILITY_TYPE_SECONDARY,
         .BackDropColor = ORANGE,
         
-        .Icon = LoadTexture("assets/BombIcon.png"),
+        .Icon = LoadTexture("assets/Textures/BombIcon.png"),
         
         .Start       = NULL,
         .Update      = NULL,

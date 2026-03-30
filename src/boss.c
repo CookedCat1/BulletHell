@@ -31,7 +31,7 @@ void InitBoss() {
     CurrentState = BossIdle;
     CurrentAttack = BossAttackNone;
     
-    AttackTimer = 2.0f;
+    AttackTimer = 3.0f;
 };
 
 void UpdateBoss(float dt) {

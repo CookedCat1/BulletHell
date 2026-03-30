@@ -15,7 +15,7 @@ extern Vector2 GetVirtualMousePosition();
 void InitLoadout() {
     abilities = GetAllAbilities();
     
-    ClickSound = LoadSound("assets/click-sound.mp3");
+    ClickSound = LoadSound("assets/SFX/click-sound.mp3");
     SetSoundVolume(ClickSound, 0.3f);
 }
 

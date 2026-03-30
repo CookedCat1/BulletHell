@@ -49,7 +49,7 @@ void InitDash() {
         
         .Type = ABILITY_TYPE_PRIMARY,
         
-        .Icon = LoadTexture("assets/DashIcon.png"),
+        .Icon = LoadTexture("assets/Textures/DashIcon.png"),
         .BackDropColor = GRAY,
         
         .Start = StartDash,

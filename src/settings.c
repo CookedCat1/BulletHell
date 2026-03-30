@@ -14,34 +14,28 @@ GameSettings Settings;
 
 void SaveSettings(const char* file) {
     FILE* f = fopen(file, "w");
-    printf("Saving settings \n");
-    printf("%d \n", f);
     if (!f) {
         printf("Failed to open settings file for writing\n");
         return;
     }
 
-    fprintf(f, "AutoShoot=%d\n", Settings.AutoShoot);
-    fprintf(f, "ScreenShake=%d\n", Settings.ScreenShake);
-    fprintf(f, "ShowSnowParticles=%d\n", Settings.ShowSnowParticles);
+    fprintf(f, "AutoShoot: %d\n", Settings.AutoShoot);
+    fprintf(f, "ScreenShake: %d\n", Settings.ScreenShake);
+    fprintf(f, "ShowSnowParticles: %d\n", Settings.ShowSnowParticles);
+    fprintf(f, "FPSCounter: %d\n", Settings.FPSCounter);
     
-    fprintf(f, "Fullscreen=%d\n", Settings.Fullscreen);
-    fprintf(f, "VSync=%d\n", Settings.VSync);
+    fprintf(f, "Fullscreen: %d\n", Settings.Fullscreen);
+    fprintf(f, "VSync: %d\n", Settings.VSync);
 
-    fprintf(f, "MasterVolume=%f\n", Settings.MasterVolume);
-    fprintf(f, "MusicVolume=%f\n", Settings.MusicVolume);
-    fprintf(f, "SfxVolume=%f\n", Settings.SfxVolume);
+    fprintf(f, "MasterVolume: %f\n", Settings.MasterVolume);
+    fprintf(f, "MusicVolume: %f\n", Settings.MusicVolume);
+    fprintf(f, "SfxVolume: %f\n", Settings.SfxVolume);
 
     fclose(f);
-
-    printf("Settings saved\n");
 }
 
-void LoadSettings(const char* file)
-{
-    printf("inside load function \n");
+void LoadSettings(const char* file) {
     FILE* f = fopen(file, "r");
-    printf("%d \n", f);
     if (!f) {
         printf("No settings file found, using defaults\n");
         return;
@@ -53,7 +47,7 @@ void LoadSettings(const char* file)
         char key[64];
         char value[64];
 
-        if (sscanf(line, "%63[^=]=%63s", key, value) == 2) {
+        if (sscanf(line, "%63[^:]: %63s", key, value) == 2) {
 
             // ints / bools
             if (strcmp(key, "AutoShoot") == 0)
@@ -64,6 +58,9 @@ void LoadSettings(const char* file)
 
             else if (strcmp(key, "ShowSnowParticles") == 0)
                 Settings.ShowSnowParticles = atoi(value);
+            
+            else if (strcmp(key, "FPSCounter") == 0)
+                Settings.FPSCounter = atoi(value);
 
             else if (strcmp(key, "Fullscreen") == 0)
                 Settings.Fullscreen = atoi(value);
@@ -84,8 +81,6 @@ void LoadSettings(const char* file)
     }
 
     fclose(f);
-
-    printf("Settings loaded\n");
 }
 
 void InitSettings(void)
@@ -94,6 +89,7 @@ void InitSettings(void)
     Settings.AutoShoot = true;
     Settings.Fullscreen = false;
     Settings.ShowSnowParticles = true;
+    Settings.FPSCounter = true;
     
     //graphics
     Settings.ScreenShake = true;
@@ -147,7 +143,7 @@ void DrawSettingsMenu(GameState *State)
     float y = panel.y + scroll.y + 15;
 
     // ===== Gameplay =====
-    GuiGroupBox((Rectangle) {x, y, 200, 120}, "Gameplay");   
+    GuiGroupBox((Rectangle) {x, y, 200, 155}, "Gameplay");   
     y += 15;
 
     GuiCheckBox((Rectangle){x + 10, y, 20, 20}, "Auto Shoot", &Settings.AutoShoot);
@@ -157,6 +153,9 @@ void DrawSettingsMenu(GameState *State)
     y += 35;
     
     GuiCheckBox((Rectangle){x + 10, y, 20, 20}, "Show background particles", &Settings.ShowSnowParticles);
+    y += 35;
+    
+    GuiCheckBox((Rectangle){x + 10, y, 20, 20}, "Show FPS Counter", &Settings.FPSCounter);
     y += 60;
 
     // ===== Graphics =====

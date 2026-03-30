@@ -23,6 +23,12 @@ static Vector2 Velocity = {0};
 static float MaxPlayerHp = 100.0f;
 static float PlayerHp;
 static float DisplayHp;
+
+static const float MaxOverHealth = 20.0f;
+static float OverHealth;
+static float DisplayOverHealth;
+bool ShatteredOverHealth;
+
 static bool RecentlyHit = false;
 static float IFrameTime = 0.0f;
 
@@ -60,7 +66,11 @@ void InitPlayer(void) {
     ShootCD = AddCooldown("Shoot", false);
     
     PlayerHp = MaxPlayerHp;
+    OverHealth = 0.0f;
     DisplayHp = PlayerHp;
+    DisplayOverHealth = OverHealth;
+    
+    ShatteredOverHealth = false;
 
     PlayerPos = (Vector2){ PlayArea.x + PLAY_WIDTH / 2.0f, PlayArea.y + PLAY_HEIGHT / 1.35f };
 }
@@ -143,9 +153,14 @@ void DrawPlayer(void)
 
 void DrawPlayerHp(void) {
     Rectangle playArea = GetPlayArea();
+    
+    AddDebug(TextFormat("Overhealth: %.1f", OverHealth), VIOLET);
 
     float hpRatio = PlayerHp / MaxPlayerHp;
     hpRatio = ClampFloat(hpRatio, 0.0f, 1.0f);
+    
+    float OverRatio = OverHealth / MaxPlayerHp;
+    OverRatio = ClampFloat(OverRatio, 0.0f, 1.0f);
     
     Rectangle bar = {
         playArea.x - 230,
@@ -157,15 +172,26 @@ void DrawPlayerHp(void) {
     DrawRectangleRec(bar, RED);
     
     float padding = 3.0f;
-    Rectangle fill = {
+    
+    float innerWidth = bar.width - padding * 2;
+    float innerHeight = bar.height - padding * 2;
+    
+    float hpWidth = innerWidth * hpRatio;
+    
+    Rectangle hpFill = {
         bar.x + padding,
         bar.y + padding,
-        (bar.width - padding * 2) * hpRatio,
-        bar.height - padding * 2
+        hpWidth,
+        innerHeight
     };
     
-    if (DamageTimer > 0.0f)
-    {
+    float OverWidth = innerWidth * OverRatio;
+
+    Rectangle OverFill = hpFill;
+    OverFill.width = OverWidth;
+    
+    //regular hp dmg effect
+    if (DamageTimer > 0.0f) {
         float MaxScale = 4.5f;
 
         float t = DmgAnimTime - DamageTimer;
@@ -194,12 +220,45 @@ void DrawPlayerHp(void) {
 
         DrawRectangleRec(FxRec, Fade(GREEN, alpha));
     }
+    
+    //overhp dmg effect
+    if (ShatteredOverHealth) {
+        float t = DmgAnimTime - DamageTimer;
+        float scale = EaseCubicOut(t, 1.0f, 3.5f, DmgAnimTime);
 
-    DrawRectangleRec(fill, GREEN);
+        float scaledHeight = innerHeight * scale;
+        float yOffset = (scaledHeight - innerHeight) / 2;
+
+        Rectangle shatterRect = {
+            bar.x + padding,
+            bar.y + padding - yOffset,
+            innerWidth,
+            scaledHeight
+        };
+
+        float alpha = EaseCubicOut(t, 0.8f, -0.8f, DmgAnimTime);
+
+        //Color purple = (Color){180, 80, 255, 255};
+
+        DrawRectangleRec(shatterRect, Fade(VIOLET, alpha));
+    }
+
+    DrawRectangleRec(hpFill, GREEN);
+    
+    if (OverHealth > 0.0f) {
+        Color purple = (Color){180, 80, 255, 255};
+        DrawRectangleRec(overFill, Fade(purple, 0.9f));
+    }
     
     DrawRectangleLinesEx(bar, 3.0f, WHITE);
     
-    const char* hpText = TextFormat("%.1f/%.0f", PlayerHp, MaxPlayerHp);
+    const char* hpText;
+    
+    if (OverHealth > 0.0f) {
+        hpText = TextFormat("%.1f/%.1f (+%.1f)", PlayerHp, MaxPlayerHp, OverHealth);
+    } else {
+        hpText = TextFormat("%.1f/%.1f", PlayerHp, MaxPlayerHp);
+    }
 
     int fontSize = 20;
     int textWidth = MeasureText(hpText, fontSize);
@@ -220,10 +279,20 @@ void AddPlayerVelocity(Vector2 v) {
     Velocity = Vector2Add(Velocity, v);
 }
 
-void HandleHit(float damage) { // HandleHit(float damage)
+void HandleHit(float damage) {
     //healing
     if (damage < 0) {
-        PlayerHp -= damage;
+        if (PlayerHp - damage > MaxPlayerHp) {
+            float LeftOver = PlayerHp - damage - MaxPlayerHp;
+            
+            PlayerHp -= damage + LeftOver;
+            OverHealth += LeftOver;
+            
+        } else PlayerHp -= damage;
+        
+        ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
+        ClampFloat(OverHealth, 0.0f, MaxOverHealth);
+        
         return;
     }
 
@@ -231,8 +300,17 @@ void HandleHit(float damage) { // HandleHit(float damage)
         DisplayHp = PlayerHp;
         DamageTimer = DmgAnimTime;
         
-        PlayerHp -= damage;
-        //ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
+        if (OverHealth > 0.0f) {
+            OverHealth -= damage;
+            
+            if (OverHealth <= 0) ShatteredOverHealth = true;
+            
+        } else {
+            PlayerHp -= damage;
+        }
+        
+        ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
+        ClampFloat(OverHealth, 0.0f, MaxOverHealth);
         
         IFrameTime += 1.5f;
         RecentlyHit = true;

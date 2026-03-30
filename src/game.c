@@ -15,9 +15,13 @@
 
 Beam BossBeams[MAX_BEAMS] = {0};
 
+//screen shake
 float ScreenShakeTime = 0.0f;
 float ScreenShakeStrength = 0.0f;
 Vector2 Shake = {0,0};
+
+//black screen fade
+static float BlackScreenAlpha;
 
 static Rectangle PlayArea;
 
@@ -29,6 +33,8 @@ void InitGame(void) {
         PLAY_WIDTH,
         PLAY_HEIGHT
     };
+    
+    BlackScreenAlpha = 1.0f;
     
     InitPlayer();
     InitBoss();
@@ -47,6 +53,11 @@ void UpdateGame(float dt) {
     
     for (int i = 0; i < MAX_BEAMS; i++) {
         UpdateBeam(&BossBeams[i], dt);
+    }
+    
+    //black screen fade
+    if (BlackScreenAlpha > 0.0f) {
+        BlackScreenAlpha -= dt * 0.75f;
     }
     
     //screen shake
@@ -77,6 +88,8 @@ void DrawGame(void) {
         .zoom = 1
     });
     
+    DrawRectangleRec(PlayArea, BLACK);
+    
     for (int i = 0; i < MAX_BEAMS; i++) DrawBeam(&BossBeams[i]);
     
     BeginScissorMode(PlayArea.x, PlayArea.y, PlayArea.width, PlayArea.height);
@@ -97,6 +110,11 @@ void DrawGame(void) {
     
     //lives
     DrawPlayerHp();
+    
+    //black screen
+    if (BlackScreenAlpha > 0.0f) {
+        DrawRectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, Fade(BLACK, BlackScreenAlpha));
+    }
     
     EndMode2D();
 }
