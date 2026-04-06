@@ -3,6 +3,7 @@
 #include <raymath.h>
 #include <math.h>
 
+#include <game.h>
 #include <mainMenu.h>
 #include <gamestate.h>
 
@@ -121,6 +122,7 @@ void DrawMainMenu(GameState *State) {
     
     if (GuiButton((Rectangle){panel.x, panel.y, 575, 75}, "Play"))
     {
+        StartGame();
         *State = Game_Playing;
     }
     

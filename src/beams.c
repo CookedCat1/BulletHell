@@ -17,9 +17,6 @@ static BeamProfile CurrentProfile = {0.75f, 0.3f, 0.5f};
 
 static bool ShowWarning = true;
 
-extern const int ScreenWidth;
-extern const int ScreenHeight;
-
 extern Beam BossBeams[];
 
 void StartBeam(Beam* beam, Vector2 origin, float rotation, bool follow) {
@@ -166,6 +163,16 @@ void SpawnBeam(Vector2 origin, float rotation, bool follow) {
     for (int i=0; i < MAX_BEAMS; i++) {
         if (BossBeams[i].State != BeamInactive) continue;
         StartBeam(&BossBeams[i], origin, rotation, follow);
+        break;
+    }
+}
+
+void DestroyAllBeams() {
+    for (int i=0; i < MAX_BEAMS; i++) {
+        if (BossBeams[i].State == BeamInactive) continue;
+        
+        BossBeams[i].State = BeamInactive;
+        BossBeams[i].Alpha = 0.0f;
         break;
     }
 }

@@ -5,10 +5,12 @@
 #include <stdbool.h>
 
 void InitPlayer(void);
+void StartPlayer(void);
 
 void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius);
 void DrawPlayer(void);
 void DrawPlayerHp(void);
+void CleanupPlayer(void);
 
 // util functions
 void AddPlayerVelocity(Vector2 v);
@@ -22,5 +24,6 @@ bool CheckBossHit(void);
 bool CheckPlayerHit(void);
 float GetPlayerRadius(void);
 int GetPlayerHp(void);
+bool IsPlayerDead(void);
 
 #endif

@@ -1,11 +1,13 @@
 #include <raylib.h>
 
 #include <game.h>
-#include <config.h>
+#include <player.h>
 #include <boss.h>
-#include <helper.h>
 #include <boss_attacks.h>
+
+#include <config.h>
 #include <debug.h>
+#include <helper.h>
 
 static Vector2 BossPos;
 static const float StartingBossHp = 100.0f;
@@ -30,9 +32,19 @@ void InitBoss() {
     
     CurrentState = BossIdle;
     CurrentAttack = BossAttackNone;
+};
+
+void StartBoss() {
+    EndBossAttack();
+    
+    BossPos = (Vector2){ PLAY_WIDTH / 2 + PlayArea.x, PLAY_HEIGHT / 8 + PlayArea.y};
+    BossHp = StartingBossHp;
+    
+    CurrentState = BossIdle;
+    CurrentAttack = BossAttackNone;
     
     AttackTimer = 3.0f;
-};
+}
 
 void UpdateBoss(float dt) {
     AttackTimer -= dt;
@@ -67,6 +79,11 @@ void UpdateBoss(float dt) {
 void EndBossAttack(void) {
     CurrentAttack = BossAttackNone;
     CurrentState = BossIdle;
+    
+    if (IsPlayerDead()) {
+        AttackTimer = 99999.9f;
+        return;
+    }
     
     AttackTimer = 2.0f;
 }

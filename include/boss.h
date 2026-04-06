@@ -16,6 +16,7 @@ typedef enum {
 } BossAttack;
 
 void InitBoss(void);
+void StartBoss(void);
 
 void UpdateBoss(float dt);
 void UpdateBossAttack(float dt);

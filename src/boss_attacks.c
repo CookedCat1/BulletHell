@@ -4,9 +4,9 @@
 #include <stddef.h>
 #include <raymath.h>
 
-#include "boss_attacks.h"
-#include "boss.h"
-#include "beams.h"
+#include <boss_attacks.h>
+#include <boss.h>
+#include <beams.h>
 #include <config.h>
 #include <debug.h>
 #include <player.h>

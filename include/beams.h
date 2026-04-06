@@ -44,6 +44,7 @@ void StartBeam(Beam* beam, Vector2 origin, float rotation, bool follow);
 void UpdateBeam(Beam* beam, float dt);
 void DrawBeam(Beam* beam);
 void SpawnBeam(Vector2 origin, float rotation, bool follow);
+void DestroyAllBeams(void);
 
 void SetBeamProfile(int type);
 void SetWarningStatus(bool enabled);

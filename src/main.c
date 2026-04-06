@@ -7,6 +7,7 @@
 #include <raygui.h>
 
 #include <game.h>
+#include <player.h>
 #include <loadout.h>
 #include <pauseMenu.h>
 #include <mainMenu.h>
@@ -49,14 +50,14 @@ int main(void) {
     InitAudioDevice();
     SetTargetFPS(2400);
     
+    InitSettings();
+    LoadSettings("saveData/settings.cfg");
+    
     // Inits
     InitGame();
     InitDebug();
     InitAbilities();
     InitLoadout();
-    
-    InitSettings();
-    LoadSettings("saveData/settings.cfg");
     
     //raygui init
     GuiLoadStyle("assets/test.rgs");
@@ -201,6 +202,7 @@ int main(void) {
     }
     
     CleanupAbilities();
+    CleanupPlayer();
     CloseAudioDevice();
     SaveSettings("saveData/settings.cfg");
     

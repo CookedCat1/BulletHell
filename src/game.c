@@ -2,23 +2,30 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+#include <reasings.h>
 
-#include <settings.h>
-#include <config.h>
+#include <speedrunTimer.h>
 #include <beams.h>
 #include <player.h>
 #include <boss.h>
 #include <cooldowns.h>
 #include <helper.h>
-#include <debug.h>
 #include <ability.h>
+
+#include <debug.h>
+#include <config.h>
+#include <settings.h>
 
 Beam BossBeams[MAX_BEAMS] = {0};
 
 //screen shake
-float ScreenShakeTime = 0.0f;
-float ScreenShakeStrength = 0.0f;
+static float ScreenShakeTime = 0.0f;
+static float ScreenShakeStrength = 0.0f;
 Vector2 Shake = {0,0};
+
+static Music BossMusic;
+static float DeathTimer = 0.0f;
+static float MaxDeathTime = 4.0f;
 
 //black screen fade
 static float BlackScreenAlpha;
@@ -35,9 +42,26 @@ void InitGame(void) {
     };
     
     BlackScreenAlpha = 1.0f;
+    DeathTimer = MaxDeathTime;
+    
+    BossMusic = LoadMusicStream("assets/Music/BossMusic.mp3");
     
     InitPlayer();
     InitBoss();
+    InitSpeedrunTimer();
+}
+
+void StartGame() {
+    BlackScreenAlpha = 1.0f;
+    DeathTimer = MaxDeathTime;
+    
+    SetMusicVolume(BossMusic, Settings.MusicVolume);
+    PlayMusicStream(BossMusic);
+    
+    StartPlayer();
+    StartBoss();
+    
+    DestroyAllBeams();
 }
 
 void UpdateGame(float dt) {
@@ -46,6 +70,21 @@ void UpdateGame(float dt) {
     UpdateBoss(dt);
     UpdateCooldowns(dt);    
     UpdateAbilities(dt);
+    UpdateSpeedrunTimer(dt);
+    
+    UpdateMusicStream(BossMusic);
+    
+    if (IsPlayerDead()) {
+        DeathTimer -= dt;
+        
+        float t = 1.0f - (DeathTimer / MaxDeathTime);
+        SetMusicPitch(BossMusic, EaseCubicOut(t, 1.0f, -1.0f, 1.0f));
+        
+        if (t >= 1.0f) {
+            StopMusicStream(BossMusic);
+            SetMusicPitch(BossMusic, 1.0f);
+        }
+    }
     
     if (CheckBossHit()) {
         DamageBoss(1.0f);
@@ -111,11 +150,19 @@ void DrawGame(void) {
     //lives
     DrawPlayerHp();
     
+    // speedrun timer
+    DrawSpeedrunTimer();
+    
     //black screen
     if (BlackScreenAlpha > 0.0f) {
         DrawRectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, Fade(BLACK, BlackScreenAlpha));
     }
     
+    if (IsPlayerDead()) {
+        float t = ClampFloat((1.0f - (DeathTimer / MaxDeathTime)) * 2, 0.0f, 1.0f);
+        DrawRectangle(0,0, GAME_WIDTH, GAME_HEIGHT, Fade(RED, EaseCubicOut(t, 1.0f, -1.0f, 1.0f)));
+    }
+     
     EndMode2D();
 }
 

@@ -30,6 +30,7 @@ static float DisplayOverHealth;
 bool ShatteredOverHealth;
 
 static bool RecentlyHit = false;
+static bool PlayerDead = false;
 static float IFrameTime = 0.0f;
 
 static float DamageTimer = 0; //dmg anim timer
@@ -58,21 +59,50 @@ static Bullet Bullets[MAX_BULLETS];
 
 CooldownID ShootCD;
 
+//sounds
+static Sound OverHpShatterSound;
+static Sound HitSound;
+static Sound CritHpSound;
+static bool PlayedCritSound = false;
+
+//textures
+static Texture2D ViginetteTexture;
+
 // ===== Public API =====
 
 void InitPlayer(void) {
     PlayArea = GetPlayArea();
     
     ShootCD = AddCooldown("Shoot", false);
-    
+
+    HitSound = LoadSound("assets/SFX/HitSFX.mp3");
+    CritHpSound = LoadSound("assets/SFX/CriticalHpSFX.mp3");
+    ViginetteTexture = LoadTexture("assets/Textures/Viginette.png");
+    OverHpShatterSound = LoadSound("assets/SFX/OverhealthShatter.mp3");
+}
+
+void StartPlayer() {
     PlayerHp = MaxPlayerHp;
     OverHealth = 0.0f;
     DisplayHp = PlayerHp;
     DisplayOverHealth = OverHealth;
     
+    IFrameTime = 0.0f
+    
+    RecentlyHit = false;
     ShatteredOverHealth = false;
+    PlayerDead = false;
 
     PlayerPos = (Vector2){ PlayArea.x + PLAY_WIDTH / 2.0f, PlayArea.y + PLAY_HEIGHT / 1.35f };
+    
+    //bullet removal
+    for (int i = 0; i < MAX_BULLETS; i++) {
+        if (Bullets[i].Active) {
+            Bullets[i].Active = false;
+            Bullets[i].Position = (Vector2){-10, -10};
+            break;
+        }
+    }
 }
 
 void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius) {    
@@ -87,8 +117,10 @@ void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius) {
     AddDebug(TextFormat("IFrameTime: %.2f", IFrameTime), YELLOW);
 
     // Movement
-    Vector2 moveDir = GetPlayerMoveDirection();
-    PlayerPos = Vector2Add(PlayerPos, Vector2Scale(moveDir, PlayerSpeed * dt));
+    if (!PlayerDead) {
+        Vector2 moveDir = GetPlayerMoveDirection();
+        PlayerPos = Vector2Add(PlayerPos, Vector2Scale(moveDir, PlayerSpeed * dt));   
+    }
     
     PlayerPos = Vector2Add(PlayerPos, Vector2Scale(Velocity, dt));
     
@@ -99,11 +131,13 @@ void UpdatePlayer(float dt, Vector2 bossPos, float bossRadius) {
     PlayerPos.y = ClampFloat(PlayerPos.y, PlayArea.y + PlayerRadius + 2, PlayArea.y + PLAY_HEIGHT - PlayerRadius - 2);
 
     // PrimaryKeybind
-    if (IsKeyPressed(KEY_SPACE)) StartAbility(SLOT_PRIMARY);
-    if (IsKeyPressed(KEY_E)) StartAbility(SLOT_SECONDARY);
+    if (!PlayerDead) {
+        if (IsKeyPressed(KEY_SPACE)) StartAbility(SLOT_PRIMARY);
+        if (IsKeyPressed(KEY_E)) StartAbility(SLOT_SECONDARY);
+    }
 
     // bullet shooting
-    if ((IsMouseButtonDown(MOUSE_LEFT_BUTTON) || Settings.AutoShoot) && !OnCooldown(ShootCD)) {
+    if ((IsMouseButtonDown(MOUSE_LEFT_BUTTON) || Settings.AutoShoot) && !OnCooldown(ShootCD) && !PlayerDead) {
         TriggerCooldown(ShootCD, ShootCooldown);
 
         for (int i = 0; i < MAX_BULLETS; i++) {
@@ -238,16 +272,20 @@ void DrawPlayerHp(void) {
 
         float alpha = EaseCubicOut(t, 0.8f, -0.8f, DmgAnimTime);
 
-        //Color purple = (Color){180, 80, 255, 255};
-
         DrawRectangleRec(shatterRect, Fade(VIOLET, alpha));
+        
+        PlaySound(OverHpShatterSound);
+        ShatteredOverHealth = false;
     }
-
+    
+    //main hp bar
+    //-----------------------------------------------------------------------
+    
     DrawRectangleRec(hpFill, GREEN);
     
-    if (OverHealth > 0.0f) {
-        Color purple = (Color){180, 80, 255, 255};
-        DrawRectangleRec(overFill, Fade(purple, 0.9f));
+    if (OverHealth > 0.0f) {        
+        //Color purple = (Color){180, 80, 255, 255};
+        DrawRectangleRec(OverFill, Fade(VIOLET, 0.9f));
     }
     
     DrawRectangleLinesEx(bar, 3.0f, WHITE);
@@ -267,6 +305,25 @@ void DrawPlayerHp(void) {
     float textY = bar.y + (bar.height - fontSize) / 2.0f;
 
     DrawText(hpText, textX, textY + 1, fontSize, Fade(WHITE, 0.95f));
+        
+    // crit hp red overlay
+    //-----------------------------------------------------------------------
+    
+    if (PlayerHp <= 10.0f) {
+        if (!PlayedCritSound) {
+            PlaySound(CritHpSound);
+            PlayedCritSound = true;
+        }
+
+        DrawTexturePro(
+            ViginetteTexture,
+            (Rectangle){0, 0, ViginetteTexture.width, ViginetteTexture.height},
+            (Rectangle){0, 0, GAME_WIDTH, GAME_HEIGHT},
+            (Vector2){0, 0},
+            0.0f,
+            Fade(RED, 0.4)
+        );
+    }
 }
 
 // util functions
@@ -280,8 +337,12 @@ void AddPlayerVelocity(Vector2 v) {
 }
 
 void HandleHit(float damage) {
+    if (PlayerDead) return;
+    
     //healing
     if (damage < 0) {
+        if (PlayerHp - damage > 10.0f && PlayedCritSound) PlayedCritSound = false;
+        
         if (PlayerHp - damage > MaxPlayerHp) {
             float LeftOver = PlayerHp - damage - MaxPlayerHp;
             
@@ -290,12 +351,13 @@ void HandleHit(float damage) {
             
         } else PlayerHp -= damage;
         
-        ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
-        ClampFloat(OverHealth, 0.0f, MaxOverHealth);
+        PlayerHp = ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
+        OverHealth = ClampFloat(OverHealth, 0.0f, MaxOverHealth);
         
         return;
     }
 
+    //damaging
     if (IFrameTime <= 0.0f) {
         DisplayHp = PlayerHp;
         DamageTimer = DmgAnimTime;
@@ -309,12 +371,19 @@ void HandleHit(float damage) {
             PlayerHp -= damage;
         }
         
-        ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
-        ClampFloat(OverHealth, 0.0f, MaxOverHealth);
+        PlayerHp = ClampFloat(PlayerHp, 0.0f, MaxPlayerHp);
+        OverHealth = ClampFloat(OverHealth, 0.0f, MaxOverHealth);
         
         IFrameTime += 1.5f;
         RecentlyHit = true;
+        PlaySound(HitSound);
+        
+        if (PlayerHp <= 0.0f) PlayerDead = true;
     }
+}
+
+void CleanupPlayer(void) {
+    UnloadTexture(ViginetteTexture);
 }
 
 // getters
@@ -356,4 +425,8 @@ Vector2 GetPlayerPosition(void) {
 
 float GetPlayerRadius(void) {
     return PlayerRadius;
+}
+
+bool IsPlayerDead(void) {
+    return PlayerDead;
 }
