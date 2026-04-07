@@ -7,14 +7,6 @@ typedef enum {
     BossAttacking
 } BossState;
 
-typedef enum {
-    BossAttackNone,
-    BeamSpin,
-    AlternatingCrossBeam,
-    CrossBeam,
-    Grid,
-} BossAttack;
-
 void InitBoss(void);
 void StartBoss(void);
 

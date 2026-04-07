@@ -201,6 +201,7 @@ int main(void) {
         EndDrawing();
     }
     
+    CleanupGame();
     CleanupAbilities();
     CleanupPlayer();
     CloseAudioDevice();

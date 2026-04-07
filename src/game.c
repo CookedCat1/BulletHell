@@ -56,6 +56,7 @@ void StartGame() {
     DeathTimer = MaxDeathTime;
     
     SetMusicVolume(BossMusic, Settings.MusicVolume);
+    SeekMusicStream(BossMusic, 0.0f);
     PlayMusicStream(BossMusic);
     
     StartPlayer();
@@ -70,7 +71,8 @@ void UpdateGame(float dt) {
     UpdateBoss(dt);
     UpdateCooldowns(dt);    
     UpdateAbilities(dt);
-    UpdateSpeedrunTimer(dt);
+    
+    if (!IsPlayerDead()) UpdateSpeedrunTimer(dt);
     
     UpdateMusicStream(BossMusic);
     
@@ -159,11 +161,15 @@ void DrawGame(void) {
     }
     
     if (IsPlayerDead()) {
-        float t = ClampFloat((1.0f - (DeathTimer / MaxDeathTime)) * 2, 0.0f, 1.0f);
-        DrawRectangle(0,0, GAME_WIDTH, GAME_HEIGHT, Fade(RED, EaseCubicOut(t, 1.0f, -1.0f, 1.0f)));
+        float t = ClampFloat((1.0f - (DeathTimer / MaxDeathTime)) * 2.5f, 0.0f, 1.0f);
+        DrawRectangle(0,0, GAME_WIDTH, GAME_HEIGHT, Fade(RED, EaseCubicOut(t, 1.0f, -0.75f, 1.0f)));
     }
      
     EndMode2D();
+}
+
+void CleanupGame() {
+    UnloadMusicStream(BossMusic);
 }
 
 Rectangle GetPlayArea(void) {

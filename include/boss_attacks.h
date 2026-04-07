@@ -5,6 +5,8 @@ void StartRandomAttack(void);
 void UpdateCurrentAttack(float dt);
 void DrawCurrentAttack(void);
 
+void ResetAttackIndex(void);
+
 // Returns how many attacks exist
 int GetAttackCount(void);
 

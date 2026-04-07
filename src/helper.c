@@ -23,7 +23,7 @@ float GetCollisionCircles(Vector2 pos1, float radius1, Vector2 pos2, float radiu
     float dist = Vector2Distance(pos1, pos2);
     float totalRadius = radius1 + radius2;
 
-    return MinFloat(totalRadius - dist, 0.0f);
+    return MaxFloat(totalRadius - dist, 0.0f);
 }
 
 void DrawTextRec(Font font, const char *text, Rectangle rec, float fontSize, float spacing, bool wordWrap, Color tint)

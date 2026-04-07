@@ -173,7 +173,6 @@ void DestroyAllBeams() {
         
         BossBeams[i].State = BeamInactive;
         BossBeams[i].Alpha = 0.0f;
-        break;
     }
 }
 

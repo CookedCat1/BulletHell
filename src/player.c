@@ -87,7 +87,7 @@ void StartPlayer() {
     DisplayHp = PlayerHp;
     DisplayOverHealth = OverHealth;
     
-    IFrameTime = 0.0f
+    IFrameTime = 0.0f;
     
     RecentlyHit = false;
     ShatteredOverHealth = false;
@@ -100,7 +100,6 @@ void StartPlayer() {
         if (Bullets[i].Active) {
             Bullets[i].Active = false;
             Bullets[i].Position = (Vector2){-10, -10};
-            break;
         }
     }
 }

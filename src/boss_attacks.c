@@ -46,7 +46,7 @@ static void CrossBeams1_Update(float dt);
 //  ATTACK TABLE
 
 static BossAttackEntry AttackTable[] = {
-    //{ CrossAttack_Start, CrossAttack_Update, NULL },
+    { CrossAttack_Start, CrossAttack_Update, NULL },
     {SpinAttack_Start, SpinAttack_Update, SpinAttack_Draw},
     {HorizontalBeams1_Start, HorizontalBeams1_Update, NULL},
     {CrossBeams1_Start, CrossBeams1_Update, NULL},
@@ -79,6 +79,10 @@ void DrawCurrentAttack(void) {
     if (CurrentAttackIndex < 0) return;
     
     if (AttackTable[CurrentAttackIndex].Draw != NULL) AttackTable[CurrentAttackIndex].Draw();
+}
+
+void ResetAttackIndex() {
+    CurrentAttackIndex = -1;
 }
 
 static Vector2 Center = {GAME_WIDTH / 2, GAME_HEIGHT / 2};
@@ -122,8 +126,7 @@ static void CrossAttack_Update(float dt) {
 
     if (ShotsFired >= CrossShotsMax)
     {
-        CurrentAttackIndex = -1;
-        EndBossAttack();   // tells boss to return to idle
+        EndBossAttack();
     }
 }
 
@@ -160,16 +163,13 @@ static void SpinAttack_Update(float dt) {
     float PlayerRadius = GetPlayerRadius();
 
     float collision = GetCollisionCircles(Center, DeadZoneRadius, GetPlayerPosition(), PlayerRadius);
-    collision = MinFloat(collision, GetPlayerRadius());
+    
+    AddDebug(TextFormat("Collision: %f", collision), ORANGE);
     
     if (collision / PlayerRadius >= 1.0f) HandleHit(10.0f);
 
     if (ShotsFired >= SpinBeamsMax) {
-        SetBeamProfile(1);
-        SetWarningStatus(true);
-        
-        CurrentAttackIndex = -1;
-        EndBossAttack();   // tells boss to return to idle
+        EndBossAttack();
     }
 }
 
@@ -215,10 +215,6 @@ static void HorizontalBeams1_Update(float dt) {
     }
     
     if (ShotsFired >= HB1_Max) {
-        SetBeamProfile(1);
-        SetWarningStatus(true);
-        
-        CurrentAttackIndex = -1;
         EndBossAttack();
     }
 }
@@ -248,10 +244,6 @@ static void CrossBeams1_Update(float dt) {
     }
     
     if (ShotsFired >= CB1_Max) {
-        SetBeamProfile(1);
-        SetWarningStatus(true);
-        
-        CurrentAttackIndex = -1;
         EndBossAttack();
     }
 }

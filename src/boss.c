@@ -4,6 +4,7 @@
 #include <player.h>
 #include <boss.h>
 #include <boss_attacks.h>
+#include <beams.h>
 
 #include <config.h>
 #include <debug.h>
@@ -16,7 +17,6 @@ static const float BossRadius = 20.0f;
 static const char* BossName = "Boss Name";
 
 static BossState CurrentState;
-static BossAttack CurrentAttack;
 
 static float AttackTimer;
 
@@ -31,7 +31,6 @@ void InitBoss() {
     BossHp = StartingBossHp;
     
     CurrentState = BossIdle;
-    CurrentAttack = BossAttackNone;
 };
 
 void StartBoss() {
@@ -41,7 +40,6 @@ void StartBoss() {
     BossHp = StartingBossHp;
     
     CurrentState = BossIdle;
-    CurrentAttack = BossAttackNone;
     
     AttackTimer = 3.0f;
 }
@@ -77,8 +75,10 @@ void UpdateBoss(float dt) {
 }
 
 void EndBossAttack(void) {
-    CurrentAttack = BossAttackNone;
     CurrentState = BossIdle;
+    ResetAttackIndex();
+    SetBeamProfile(1);
+    SetWarningStatus(true);
     
     if (IsPlayerDead()) {
         AttackTimer = 99999.9f;
